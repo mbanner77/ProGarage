@@ -43,9 +43,10 @@ export async function getTenantInvoices() {
 
     const data = await prisma.invoice.findMany({
       where: {
-        contract: {
-          tenantId: session.id,
-        },
+        OR: [
+          { tenantId: session.id },
+          { contract: { tenantId: session.id } },
+        ],
       },
       orderBy: { dueDate: "desc" },
       include: {

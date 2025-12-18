@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -111,7 +110,6 @@ export function TenantSidebar({ user, profile }: TenantSidebarProps) {
         </Button>
       </SidebarFooter>
 
-      <SidebarTrigger className="absolute -right-4 top-4" />
     </Sidebar>
   )
 }
