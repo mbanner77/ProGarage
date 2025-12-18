@@ -112,6 +112,54 @@ export async function getManagers() {
   }
 }
 
+export async function getJanitors() {
+  try {
+    const data = await prisma.user.findMany({
+      where: { role: "janitor" },
+      orderBy: { lastName: "asc" },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    })
+
+    return { data }
+  } catch (error) {
+    console.error("[v0] getJanitors exception:", error)
+    return { error: String(error) }
+  }
+}
+
+export async function getStaffUsers() {
+  try {
+    const data = await prisma.user.findMany({
+      where: { role: { in: ["admin", "property_manager", "janitor"] } },
+      orderBy: [{ role: "asc" }, { lastName: "asc" }],
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    })
+
+    return { data }
+  } catch (error) {
+    console.error("[v0] getStaffUsers exception:", error)
+    return { error: String(error) }
+  }
+}
+
 export async function getUserById(id: string) {
   console.log("[v0] getUserById action called with id:", id)
 

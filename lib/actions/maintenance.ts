@@ -109,9 +109,53 @@ export async function updateMaintenanceStatus(id: string, status: MaintenanceSta
     revalidatePath("/admin/maintenance")
     revalidatePath("/manager/maintenance")
     revalidatePath("/portal/maintenance")
+    revalidatePath("/janitor/tasks")
     return { data, success: true }
   } catch (error) {
     console.error("[v0] updateMaintenanceStatus exception:", error)
+    return { error: String(error) }
+  }
+}
+
+export async function updateMaintenanceSchedule(id: string, data: {
+  scheduledDate?: Date | null
+  scheduledTime?: string | null
+  notes?: string | null
+}) {
+  try {
+    const result = await prisma.maintenanceRequest.update({
+      where: { id },
+      data: {
+        scheduledDate: data.scheduledDate,
+        scheduledTime: data.scheduledTime,
+        notes: data.notes,
+      },
+    })
+
+    revalidatePath("/admin/maintenance")
+    revalidatePath("/janitor/tasks")
+    return { data: result, success: true }
+  } catch (error) {
+    console.error("[v0] updateMaintenanceSchedule exception:", error)
+    return { error: String(error) }
+  }
+}
+
+export async function assignMaintenanceToJanitor(id: string, janitorId: string) {
+  try {
+    const data = await prisma.maintenanceRequest.update({
+      where: { id },
+      data: {
+        assignedToId: janitorId,
+        status: "pending",
+      },
+    })
+
+    revalidatePath("/admin/maintenance")
+    revalidatePath("/janitor/tasks")
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] assignMaintenanceToJanitor exception:", error)
     return { error: String(error) }
   }
 }

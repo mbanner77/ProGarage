@@ -12,6 +12,7 @@ enum UserRole {
   property_manager
   tenant
   employee
+  janitor
 }
 
 enum ContractStatus {
@@ -211,6 +212,9 @@ model MaintenanceRequest {
   priority     String            @default("medium")
   status       MaintenanceStatus @default(pending)
   assignedToId String?           @map("assigned_to")
+  scheduledDate DateTime?        @map("scheduled_date")
+  scheduledTime String?          @map("scheduled_time")
+  notes        String?
   resolvedAt   DateTime?         @map("resolved_at")
   createdAt    DateTime          @default(now()) @map("created_at")
   updatedAt    DateTime          @updatedAt @map("updated_at")

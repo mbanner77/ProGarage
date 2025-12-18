@@ -11,6 +11,7 @@ import {
   Wrench,
   MessageSquare,
   Settings,
+  UserCog,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -61,6 +62,7 @@ export function AdminSidebar({ user, profile }: AdminSidebarProps) {
     { name: "Termine", href: "/admin/appointments", icon: Calendar },
     { name: "Wartung", href: "/admin/maintenance", icon: Wrench },
     { name: "Anfragen", href: "/admin/quotes", icon: MessageSquare },
+    { name: "Benutzer", href: "/admin/users", icon: UserCog },
     { name: "Einstellungen", href: "/admin/settings", icon: Settings },
   ]
 
