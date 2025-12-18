@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
+    "postinstall": "npx prisma generate",
+    "build": "npx prisma db push && npx tsx prisma/seed.ts && next build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
