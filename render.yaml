@@ -3,7 +3,7 @@ databases:
     databaseName: propmanage
     user: propmanage
     region: frankfurt
-    plan: starter
+    plan: free
 
 services:
   - type: web
