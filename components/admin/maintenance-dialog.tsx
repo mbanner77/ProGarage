@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -15,11 +15,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { updateMaintenanceStatus } from "@/lib/actions/maintenance"
+import { updateMaintenanceStatus, assignMaintenanceToJanitor } from "@/lib/actions/maintenance"
+import { getJanitors } from "@/lib/actions/users"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
-import { Wrench, AlertTriangle, User, FileText, Loader2, CheckCircle2 } from "lucide-react"
+import { Wrench, AlertTriangle, User, FileText, Loader2, CheckCircle2, HardHat } from "lucide-react"
 
 interface MaintenanceDialogProps {
   request: any
@@ -29,13 +30,28 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [janitors, setJanitors] = useState<{ id: string; firstName: string | null; lastName: string | null; email: string }[]>([])
+  const [selectedJanitor, setSelectedJanitor] = useState<string>(request.assignedToId || "")
+
+  useEffect(() => {
+    if (open) {
+      getJanitors().then((result) => {
+        if (result.data) {
+          setJanitors(result.data)
+        }
+      })
+    }
+  }, [open])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const result = await updateMaintenanceStatus(request.id, formData.get("status") as string)
+    const status = formData.get("status") as string
+    
+    // First update status
+    const result = await updateMaintenanceStatus(request.id, status)
 
     if (result.error) {
       toast({
@@ -43,15 +59,28 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
         description: result.error,
         variant: "destructive",
       })
-    } else {
-      toast({
-        title: "Erfolg",
-        description: "Status wurde aktualisiert",
-      })
-      setOpen(false)
-      router.refresh()
+      setLoading(false)
+      return
     }
 
+    // Then assign janitor if selected
+    if (selectedJanitor && selectedJanitor !== request.assignedToId) {
+      const assignResult = await assignMaintenanceToJanitor(request.id, selectedJanitor)
+      if (assignResult.error) {
+        toast({
+          title: "Warnung",
+          description: "Status aktualisiert, aber Zuweisung fehlgeschlagen",
+          variant: "destructive",
+        })
+      }
+    }
+
+    toast({
+      title: "Erfolg",
+      description: "Wartungsanfrage wurde aktualisiert",
+    })
+    setOpen(false)
+    router.refresh()
     setLoading(false)
   }
 
@@ -120,6 +149,34 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
                   <SelectItem value="completed">Erledigt</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Janitor Assignment */}
+            <div className="space-y-2">
+              <Label htmlFor="janitor" className="text-sm font-medium flex items-center gap-2">
+                <HardHat className="h-3.5 w-3.5 text-orange-500" />
+                Hausmeister zuweisen
+              </Label>
+              <Select value={selectedJanitor} onValueChange={setSelectedJanitor}>
+                <SelectTrigger className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors">
+                  <SelectValue placeholder="Hausmeister auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nicht zugewiesen</SelectItem>
+                  {janitors.map((janitor) => (
+                    <SelectItem key={janitor.id} value={janitor.id}>
+                      {janitor.firstName && janitor.lastName 
+                        ? `${janitor.firstName} ${janitor.lastName}` 
+                        : janitor.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {request.assignedTo && (
+                <p className="text-xs text-muted-foreground">
+                  Aktuell: {request.assignedTo.firstName} {request.assignedTo.lastName}
+                </p>
+              )}
             </div>
 
             {/* Details Card */}
