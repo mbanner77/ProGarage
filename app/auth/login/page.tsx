@@ -35,10 +35,12 @@ export default function LoginPage() {
       // Redirect based on role
       if (result.data?.user) {
         const role = result.data.user.role
-        if (role === "admin" || role === "employee") {
+        if (role === "admin") {
           router.push("/admin")
         } else if (role === "property_manager") {
-          router.push("/manager")
+          router.push("/admin")
+        } else if (role === "janitor") {
+          router.push("/janitor")
         } else {
           router.push("/portal")
         }
