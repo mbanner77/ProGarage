@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Building2 } from "lucide-react"
+import { Plus, Building2, MapPin, FileText, Loader2, Sparkles } from "lucide-react"
 import { createProperty } from "@/lib/actions/properties"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
@@ -59,61 +59,131 @@ export function PropertyDialog({ trigger }: PropertyDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5">
+            <Plus className="h-4 w-4" />
             Neue Immobilie
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Neue Immobilie erstellen
-            </DialogTitle>
-            <DialogDescription>Fügen Sie eine neue Immobilie zu Ihrem Portfolio hinzu</DialogDescription>
-          </DialogHeader>
+          {/* Header with gradient */}
+          <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 pb-4">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+            <DialogHeader className="relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold">Neue Immobilie</DialogTitle>
+                  <DialogDescription className="text-muted-foreground">
+                    Fügen Sie eine neue Immobilie hinzu
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name der Immobilie *</Label>
-              <Input id="name" name="name" placeholder="z.B. Wohnanlage Musterstraße" required />
+          {/* Form Content */}
+          <div className="p-6 space-y-5">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                Name der Immobilie
+              </Label>
+              <Input 
+                id="name" 
+                name="name" 
+                placeholder="z.B. Garagenhof Musterstraße" 
+                required 
+                className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors"
+              />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="address">Adresse *</Label>
-              <Input id="address" name="address" placeholder="Musterstraße 123" required />
+            {/* Address Field */}
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-sm font-medium flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+                Adresse
+              </Label>
+              <Input 
+                id="address" 
+                name="address" 
+                placeholder="Musterstraße 123" 
+                required 
+                className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors"
+              />
             </div>
 
+            {/* City and Postal Code */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="city">Stadt *</Label>
-                <Input id="city" name="city" placeholder="Berlin" required />
+              <div className="space-y-2">
+                <Label htmlFor="city" className="text-sm font-medium">Stadt</Label>
+                <Input 
+                  id="city" 
+                  name="city" 
+                  placeholder="Berlin" 
+                  required 
+                  className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors"
+                />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="postal_code">PLZ *</Label>
-                <Input id="postal_code" name="postal_code" placeholder="10115" required />
+              <div className="space-y-2">
+                <Label htmlFor="postal_code" className="text-sm font-medium">PLZ</Label>
+                <Input 
+                  id="postal_code" 
+                  name="postal_code" 
+                  placeholder="10115" 
+                  required 
+                  className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors"
+                />
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="description">Beschreibung</Label>
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                Beschreibung
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Textarea
                 id="description"
                 name="description"
                 placeholder="Zusätzliche Informationen zur Immobilie..."
                 rows={3}
+                className="bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors resize-none"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          {/* Footer */}
+          <DialogFooter className="p-6 pt-4 bg-muted/30 border-t">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => setOpen(false)}
+              className="hover:bg-muted"
+            >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Erstelle..." : "Immobilie erstellen"}
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 min-w-[140px]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Erstelle...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Erstellen
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

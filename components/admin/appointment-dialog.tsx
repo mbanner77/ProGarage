@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, CalendarIcon } from "lucide-react"
+import { Plus, CalendarIcon, Building2, User, Clock, FileText, Loader2, Sparkles } from "lucide-react"
 import { createAppointment } from "@/lib/actions/appointments"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
@@ -63,33 +63,58 @@ export function AppointmentDialog({ trigger, properties = [], users = [] }: Appo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5">
+            <Plus className="h-4 w-4" />
             Neuer Termin
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              Neuen Termin erstellen
-            </DialogTitle>
-            <DialogDescription>Planen Sie eine Besichtigung oder einen Wartungstermin</DialogDescription>
-          </DialogHeader>
+          {/* Header with gradient */}
+          <div className="relative bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent p-6 pb-4">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl" />
+            <DialogHeader className="relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-lg shadow-violet-500/30">
+                  <CalendarIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold">Neuer Termin</DialogTitle>
+                  <DialogDescription className="text-muted-foreground">
+                    Planen Sie eine Besichtigung
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Titel *</Label>
-              <Input id="title" name="title" placeholder="z.B. Besichtigung Wohnung 12" required />
+          {/* Form Content */}
+          <div className="p-6 space-y-5">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-sm font-medium flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                Titel
+              </Label>
+              <Input 
+                id="title" 
+                name="title" 
+                placeholder="z.B. Besichtigung Garage 12" 
+                required 
+                className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors"
+              />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="property_id">Immobilie *</Label>
+            {/* Property Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="property_id" className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-3.5 w-3.5 text-violet-500" />
+                Immobilie
+              </Label>
               <Select name="property_id" value={selectedProperty} onValueChange={setSelectedProperty} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Immobilie auswählen" />
+                <SelectTrigger className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors">
+                  <SelectValue placeholder="Immobilie auswählen..." />
                 </SelectTrigger>
                 <SelectContent>
                   {properties.map((property) => (
@@ -101,16 +126,31 @@ export function AppointmentDialog({ trigger, properties = [], users = [] }: Appo
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="scheduled_date">Datum und Uhrzeit *</Label>
-              <Input id="scheduled_date" name="scheduled_date" type="datetime-local" required />
+            {/* Date/Time */}
+            <div className="space-y-2">
+              <Label htmlFor="scheduled_date" className="text-sm font-medium flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-violet-500" />
+                Datum und Uhrzeit
+              </Label>
+              <Input 
+                id="scheduled_date" 
+                name="scheduled_date" 
+                type="datetime-local" 
+                required 
+                className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors"
+              />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="assigned_to">Zugewiesen an</Label>
+            {/* Assigned To */}
+            <div className="space-y-2">
+              <Label htmlFor="assigned_to" className="text-sm font-medium flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-violet-500" />
+                Zugewiesen an
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Select name="assigned_to">
-                <SelectTrigger>
-                  <SelectValue placeholder="Person auswählen (optional)" />
+                <SelectTrigger className="h-11 bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors">
+                  <SelectValue placeholder="Person auswählen..." />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -122,23 +162,49 @@ export function AppointmentDialog({ trigger, properties = [], users = [] }: Appo
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="description">Beschreibung</Label>
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-violet-500" />
+                Beschreibung
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Textarea
                 id="description"
                 name="description"
                 placeholder="Zusätzliche Informationen zum Termin..."
                 rows={3}
+                className="bg-muted/50 border-muted-foreground/20 focus:bg-background transition-colors resize-none"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          {/* Footer */}
+          <DialogFooter className="p-6 pt-4 bg-muted/30 border-t">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => setOpen(false)}
+              className="hover:bg-muted"
+            >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Erstelle..." : "Termin erstellen"}
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="gap-2 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 shadow-lg shadow-violet-500/25 min-w-[140px]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Erstelle...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Erstellen
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>
