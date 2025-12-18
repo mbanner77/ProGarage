@@ -1,35 +1,14 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getMaintenanceRequests } from "@/lib/actions/maintenance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Wrench, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default async function ManagerMaintenancePage() {
-  const supabase = await createClient()
+  const { data: maintenanceRequests } = await getMaintenanceRequests()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: maintenanceRequests } = await supabase
-    .from("maintenance_requests")
-    .select(
-      `
-      *,
-      property:properties(*),
-      unit:units(*),
-      tenant:profiles!maintenance_requests_tenant_id_fkey(*)
-    `,
-    )
-    .order("created_at", { ascending: false })
-
-  const pending = maintenanceRequests?.filter((req) => req.status === "pending")
-  const inProgress = maintenanceRequests?.filter((req) => req.status === "in_progress")
-  const completed = maintenanceRequests?.filter((req) => req.status === "completed")
+  const pending = maintenanceRequests?.filter((req: any) => req.status === "pending")
+  const inProgress = maintenanceRequests?.filter((req: any) => req.status === "in_progress")
+  const completed = maintenanceRequests?.filter((req: any) => req.status === "completed")
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6">

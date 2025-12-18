@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createClient } from "@/lib/supabase/client"
+import { signIn } from "@/lib/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Warehouse } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -20,34 +21,28 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const result = await signIn(email, password)
 
-      if (authError) throw authError
+      if (result.error) {
+        setError(result.error)
+        return
+      }
 
-      // Get user profile to determine role
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-        // Redirect based on role
-        if (profile?.role === "admin" || profile?.role === "employee") {
+      // Redirect based on role
+      if (result.data?.user) {
+        const role = result.data.user.role
+        if (role === "admin" || role === "employee") {
           router.push("/admin")
-        } else if (profile?.role === "property_manager") {
+        } else if (role === "property_manager") {
           router.push("/manager")
         } else {
           router.push("/portal")
         }
+        router.refresh()
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Anmeldung fehlgeschlagen")

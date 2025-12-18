@@ -1,9 +1,9 @@
 "use client"
 
-import { Calendar, LogOut, Home, LayoutDashboard, Wrench } from "lucide-react"
+import { Calendar, LogOut, Home, LayoutDashboard, Wrench, Warehouse } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { signOut } from "@/lib/actions/auth"
 import { useRouter } from "next/navigation"
 import {
   Sidebar,
@@ -17,13 +17,18 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import type { User } from "@supabase/supabase-js"
 
 interface ManagerSidebarProps {
-  user: User
+  user: {
+    id: string
+    email: string
+    firstName?: string | null
+    lastName?: string | null
+    role: string
+  }
   profile: {
-    first_name?: string
-    last_name?: string
+    firstName?: string | null
+    lastName?: string | null
     email: string
     role: string
   } | null
@@ -32,11 +37,9 @@ interface ManagerSidebarProps {
 export function ManagerSidebar({ user, profile }: ManagerSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push("/auth/login")
+    await signOut()
   }
 
   const navigation = [
@@ -46,8 +49,8 @@ export function ManagerSidebar({ user, profile }: ManagerSidebarProps) {
   ]
 
   const initials =
-    profile?.first_name && profile?.last_name
-      ? `${profile.first_name[0]}${profile.last_name[0]}`
+    profile?.firstName && profile?.lastName
+      ? `${profile.firstName[0]}${profile.lastName[0]}`
       : profile?.email[0].toUpperCase() || "H"
 
   return (
@@ -89,8 +92,8 @@ export function ManagerSidebar({ user, profile }: ManagerSidebarProps) {
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <p className="truncate text-sm font-medium">
-              {profile?.first_name && profile?.last_name
-                ? `${profile.first_name} ${profile.last_name}`
+              {profile?.firstName && profile?.lastName
+                ? `${profile.firstName} ${profile.lastName}`
                 : profile?.email}
             </p>
             <p className="text-xs text-muted-foreground">Hausmeister</p>

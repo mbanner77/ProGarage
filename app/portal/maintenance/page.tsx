@@ -1,26 +1,11 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getMaintenanceRequests } from "@/lib/actions/maintenance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 import { MaintenanceDialog } from "@/components/portal/maintenance-dialog"
 import { Badge } from "@/components/ui/badge"
 
 export default async function TenantMaintenancePage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: maintenanceRequests } = await supabase
-    .from("maintenance_requests")
-    .select("*")
-    .eq("tenant_id", user.id)
-    .order("created_at", { ascending: false })
+  const { data: maintenanceRequests } = await getMaintenanceRequests()
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

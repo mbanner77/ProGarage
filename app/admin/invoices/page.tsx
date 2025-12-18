@@ -1,32 +1,12 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getInvoices } from "@/lib/actions/invoices"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { InvoiceDialog } from "@/components/admin/invoice-dialog"
 
 export default async function InvoicesPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: invoices } = await supabase
-    .from("invoices")
-    .select(
-      `
-      *,
-      tenant:profiles!invoices_tenant_id_fkey(*)
-    `,
-    )
-    .order("due_date", { ascending: false })
-
-  const { data: tenants } = await supabase.from("profiles").select("id, first_name, last_name").eq("role", "tenant")
+  const { data: invoices } = await getInvoices()
+  const tenants: any[] = [] // TODO: Add getTenants action
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

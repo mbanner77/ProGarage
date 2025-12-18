@@ -1,30 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getQuoteRequests } from "@/lib/actions/quotes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageSquare, Mail, Phone, Building2 } from "lucide-react"
+import { MessageSquare, Mail, Phone, Warehouse } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default async function AdminQuotesPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (profile?.role !== "admin" && profile?.role !== "property_manager") {
-    redirect("/portal")
-  }
-
-  const { data: quoteRequests } = await supabase
-    .from("quote_requests")
-    .select("*")
-    .order("created_at", { ascending: false })
+  const { data: quoteRequests } = await getQuoteRequests()
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

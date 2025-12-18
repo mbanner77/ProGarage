@@ -1,23 +1,19 @@
 import type React from "react"
-import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { getCurrentUser } from "@/lib/actions/auth"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { ManagerSidebar } from "@/components/manager/manager-sidebar"
 
 export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
+  const result = await getCurrentUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  if (!result?.user) {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { user, profile } = result
 
-  if (profile?.role !== "property_manager") {
+  if (user.role !== "property_manager") {
     redirect("/portal")
   }
 

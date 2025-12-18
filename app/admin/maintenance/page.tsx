@@ -1,38 +1,11 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getMaintenanceRequests } from "@/lib/actions/maintenance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Wrench, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { MaintenanceDialog } from "@/components/admin/maintenance-dialog"
 
 export default async function AdminMaintenancePage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (profile?.role !== "admin" && profile?.role !== "property_manager") {
-    redirect("/portal")
-  }
-
-  const { data: maintenanceRequests } = await supabase
-    .from("maintenance_requests")
-    .select(
-      `
-      *,
-      property:properties(*),
-      unit:units(*),
-      tenant:profiles!maintenance_requests_tenant_id_fkey(*)
-    `,
-    )
-    .order("created_at", { ascending: false })
+  const { data: maintenanceRequests } = await getMaintenanceRequests()
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

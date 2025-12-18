@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  Building2,
+  Warehouse,
   Users,
   FileText,
   Calendar,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { signOut } from "@/lib/actions/auth"
 import { useRouter } from "next/navigation"
 import {
   Sidebar,
@@ -27,13 +27,18 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import type { User } from "@supabase/supabase-js"
 
 interface AdminSidebarProps {
-  user: User
+  user: {
+    id: string
+    email: string
+    firstName?: string | null
+    lastName?: string | null
+    role: string
+  }
   profile: {
-    first_name?: string
-    last_name?: string
+    firstName?: string | null
+    lastName?: string | null
     email: string
     role: string
   } | null
@@ -42,16 +47,14 @@ interface AdminSidebarProps {
 export function AdminSidebar({ user, profile }: AdminSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push("/auth/login")
+    await signOut()
   }
 
   const navigation = [
     { name: "Übersicht", href: "/admin", icon: LayoutDashboard },
-    { name: "Immobilien", href: "/admin/properties", icon: Building2 },
+    { name: "Garagen", href: "/admin/properties", icon: Warehouse },
     { name: "Mieter", href: "/admin/tenants", icon: Users },
     { name: "Verträge", href: "/admin/contracts", icon: FileText },
     { name: "Rechnungen", href: "/admin/invoices", icon: FileText },
@@ -61,8 +64,8 @@ export function AdminSidebar({ user, profile }: AdminSidebarProps) {
   ]
 
   const initials =
-    profile?.first_name && profile?.last_name
-      ? `${profile.first_name[0]}${profile.last_name[0]}`
+    profile?.firstName && profile?.lastName
+      ? `${profile.firstName[0]}${profile.lastName[0]}`
       : profile?.email[0].toUpperCase() || "A"
 
   return (
@@ -104,8 +107,8 @@ export function AdminSidebar({ user, profile }: AdminSidebarProps) {
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <p className="truncate text-sm font-medium">
-              {profile?.first_name && profile?.last_name
-                ? `${profile.first_name} ${profile.last_name}`
+              {profile?.firstName && profile?.lastName
+                ? `${profile.firstName} ${profile.lastName}`
                 : profile?.email}
             </p>
             <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>

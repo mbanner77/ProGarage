@@ -1,52 +1,15 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getAppointments } from "@/lib/actions/appointments"
+import { getMaintenanceRequests } from "@/lib/actions/maintenance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, CheckCircle2, Clock, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default async function ManagerDashboard() {
-  const supabase = await createClient()
+  const { data: todayAppointments } = await getAppointments()
+  const { data: maintenanceRequests } = await getMaintenanceRequests()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const today = new Date().toISOString().split("T")[0]
-
-  const { data: todayAppointments } = await supabase
-    .from("appointments")
-    .select(
-      `
-      *,
-      property:properties(*),
-      unit:units(*)
-    `,
-    )
-    .eq("assigned_to", user.id)
-    .gte("scheduled_date", today)
-    .lt("scheduled_date", `${today}T23:59:59`)
-    .order("scheduled_date", { ascending: true })
-
-  const { data: maintenanceRequests } = await supabase
-    .from("maintenance_requests")
-    .select(
-      `
-      *,
-      property:properties(*),
-      unit:units(*),
-      tenant:profiles!maintenance_requests_tenant_id_fkey(*)
-    `,
-    )
-    .in("status", ["pending", "in_progress"])
-    .order("priority", { ascending: false })
-    .limit(5)
-
-  const completedToday = todayAppointments?.filter((apt) => apt.status === "completed").length || 0
-  const pendingToday = todayAppointments?.filter((apt) => apt.status === "scheduled").length || 0
+  const completedToday = todayAppointments?.filter((apt: any) => apt.status === "completed").length || 0
+  const pendingToday = todayAppointments?.filter((apt: any) => apt.status === "scheduled").length || 0
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6">

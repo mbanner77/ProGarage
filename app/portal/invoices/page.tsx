@@ -1,37 +1,11 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getTenantInvoices } from "@/lib/actions/invoices"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Download, CreditCard } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
 export default async function TenantInvoicesPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: invoices } = await supabase
-    .from("invoices")
-    .select(
-      `
-      *,
-      contract:contracts!inner(
-        tenant_id,
-        unit:units(
-          unit_number,
-          property:properties(name, address)
-        )
-      )
-    `,
-    )
-    .eq("contract.tenant_id", user.id)
-    .order("due_date", { ascending: false })
+  const { data: invoices } = await getTenantInvoices()
 
   const getStatusBadge = (status: string) => {
     switch (status) {

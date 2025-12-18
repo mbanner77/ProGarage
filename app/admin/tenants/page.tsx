@@ -1,30 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getContracts } from "@/lib/actions/contracts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Mail, Phone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default async function TenantsPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: contracts } = await supabase
-    .from("contracts")
-    .select(
-      `
-      *,
-      tenant:profiles!contracts_tenant_id_fkey(*),
-      unit:units(*, property:properties(*))
-    `,
-    )
-    .order("created_at", { ascending: false })
+  const { data: contracts } = await getContracts()
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

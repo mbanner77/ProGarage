@@ -1,26 +1,8 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
 import { getAdminStats } from "@/lib/actions/stats"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Users, FileText, Calendar, TrendingUp, AlertCircle, Wrench } from "lucide-react"
+import { Warehouse, Users, FileText, Calendar, TrendingUp, AlertCircle, Wrench } from "lucide-react"
 
 export default async function AdminDashboard() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-  if (profile?.role !== "admin" && profile?.role !== "property_manager") {
-    redirect("/portal")
-  }
-
   const stats = await getAdminStats()
 
   return (
@@ -35,8 +17,8 @@ export default async function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Immobilien</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Garagen</CardTitle>
+            <Warehouse className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.properties}</div>
@@ -89,10 +71,10 @@ export default async function AdminDashboard() {
               href="/admin/properties"
               className="flex items-center gap-3 rounded-lg border border-border/40 bg-secondary/30 p-4 transition-colors hover:bg-secondary/50"
             >
-              <Building2 className="h-5 w-5 text-primary" />
+              <Warehouse className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Immobilien verwalten</p>
-                <p className="text-sm text-muted-foreground">Objekte und Einheiten</p>
+                <p className="font-medium">Garagen verwalten</p>
+                <p className="text-sm text-muted-foreground">Standorte und Stellplätze</p>
               </div>
             </a>
             <a
@@ -150,7 +132,7 @@ export default async function AdminDashboard() {
               </div>
               <div className="flex-1 space-y-1">
                 <p className="text-sm font-medium">Datenbank verbunden</p>
-                <p className="text-xs text-muted-foreground">Supabase aktiv</p>
+                <p className="text-xs text-muted-foreground">PostgreSQL aktiv</p>
               </div>
             </div>
           </CardContent>

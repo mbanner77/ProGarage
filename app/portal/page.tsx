@@ -1,47 +1,25 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/actions/auth"
+import { getTenantContract } from "@/lib/actions/contracts"
+import { getTenantInvoices } from "@/lib/actions/invoices"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Home, FileText, AlertCircle, Euro } from "lucide-react"
+import { redirect } from "next/navigation"
 
 export default async function TenantPortal() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  const userResult = await getCurrentUser()
+  if (!userResult?.user) {
     redirect("/auth/login")
   }
+  const { user: profile } = userResult
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: contract } = await getTenantContract()
+  const { data: invoices } = await getTenantInvoices()
 
-  // Fetch tenant's contract and unit info
-  const { data: contract } = await supabase
-    .from("contracts")
-    .select(
-      `
-      *,
-      unit:units(*, property:properties(*))
-    `,
-    )
-    .eq("tenant_id", user.id)
-    .eq("status", "active")
-    .single()
-
-  // Fetch tenant's invoices
-  const { data: invoices } = await supabase
-    .from("invoices")
-    .select("*")
-    .eq("tenant_id", user.id)
-    .order("due_date", { ascending: false })
-    .limit(5)
-
-  const pendingInvoices = invoices?.filter((inv) => inv.status !== "paid").length || 0
+  const pendingInvoices = invoices?.filter((inv: any) => inv.status !== "paid").length || 0
   const totalDue =
     invoices
-      ?.filter((inv) => inv.status !== "paid")
-      .reduce((sum, inv) => sum + Number(inv.amount), 0)
+      ?.filter((inv: any) => inv.status !== "paid")
+      .reduce((sum: number, inv: any) => sum + Number(inv.amount), 0)
       .toFixed(2) || "0.00"
 
   return (

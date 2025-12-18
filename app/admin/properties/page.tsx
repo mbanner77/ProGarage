@@ -1,26 +1,12 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getProperties } from "@/lib/actions/properties"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, Building2, MapPin } from "lucide-react"
+import { Plus, Warehouse, MapPin } from "lucide-react"
 import Link from "next/link"
 import { PropertyDialog } from "@/components/admin/property-dialog"
 
 export default async function PropertiesPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: properties } = await supabase
-    .from("properties")
-    .select("*, units(id)")
-    .order("created_at", { ascending: false })
+  const { data: properties } = await getProperties()
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

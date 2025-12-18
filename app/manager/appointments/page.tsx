@@ -1,36 +1,15 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getAppointments } from "@/lib/actions/appointments"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default async function ManagerAppointmentsPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: appointments } = await supabase
-    .from("appointments")
-    .select(
-      `
-      *,
-      property:properties(*),
-      unit:units(*)
-    `,
-    )
-    .eq("assigned_to", user.id)
-    .order("scheduled_date", { ascending: false })
+  const { data: appointments } = await getAppointments()
 
   const upcoming = appointments?.filter(
-    (apt) => apt.status === "scheduled" && new Date(apt.scheduled_date) >= new Date(),
+    (apt: any) => apt.status === "scheduled" && new Date(apt.scheduledDate) >= new Date(),
   )
-  const completed = appointments?.filter((apt) => apt.status === "completed")
+  const completed = appointments?.filter((apt: any) => apt.status === "completed")
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6">

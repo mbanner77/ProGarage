@@ -1,21 +1,17 @@
 import type React from "react"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/actions/auth"
 import { TenantSidebar } from "@/components/portal/tenant-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default async function TenantPortalLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
+  const result = await getCurrentUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  if (!result?.user) {
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { user, profile } = result
 
   return (
     <SidebarProvider>

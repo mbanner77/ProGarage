@@ -1,35 +1,14 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getAppointments } from "@/lib/actions/appointments"
+import { getProperties } from "@/lib/actions/properties"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CalendarIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { AppointmentDialog } from "@/components/admin/appointment-dialog"
 
 export default async function AppointmentsPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const { data: appointments } = await supabase
-    .from("appointments")
-    .select(
-      `
-      *,
-      property:properties(*),
-      unit:units(*),
-      assigned:profiles!appointments_assigned_to_fkey(*)
-    `,
-    )
-    .order("scheduled_date", { ascending: true })
-
-  const { data: properties } = await supabase.from("properties").select("*")
-  const { data: users } = await supabase.from("profiles").select("*").in("role", ["property_manager", "admin"])
+  const { data: appointments } = await getAppointments()
+  const { data: properties } = await getProperties()
+  const users: any[] = [] // TODO: Add getUsers action
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">
