@@ -282,6 +282,25 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border/40 bg-secondary/10 py-12">
         <div className="container mx-auto px-6">
+          <div className="mb-8 rounded-lg border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold">Administrator Setup</p>
+                  <p className="text-sm text-muted-foreground">
+                    Erste Inbetriebnahme? Datenbank einrichten und loslegen
+                  </p>
+                </div>
+              </div>
+              <Button asChild variant="outline" className="bg-background">
+                <Link href="/setup">Zur Einrichtung</Link>
+              </Button>
+            </div>
+          </div>
+
           <div className="grid gap-8 md:grid-cols-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
@@ -321,6 +340,11 @@ export default function LandingPage() {
                   <a href="#" className="transition-colors hover:text-foreground">
                     Impressum
                   </a>
+                </li>
+                <li>
+                  <Link href="/setup" className="transition-colors hover:text-primary">
+                    System Setup
+                  </Link>
                 </li>
               </ul>
             </div>

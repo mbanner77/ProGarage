@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 interface SQLStep {
@@ -235,6 +235,177 @@ export default function SQLDebugPage() {
   ])
 
   const [isRunning, setIsRunning] = useState(false)
+  const [showRepair, setShowRepair] = useState(false)
+  const [showReset, setShowReset] = useState(false)
+
+  const resetSteps: SQLStep[] = [
+    {
+      id: "reset-1",
+      name: "Drop all tables",
+      sql: `
+DROP TABLE IF EXISTS public.payments CASCADE;
+DROP TABLE IF EXISTS public.messages CASCADE;
+DROP TABLE IF EXISTS public.maintenance_requests CASCADE;
+DROP TABLE IF EXISTS public.appointments CASCADE;
+DROP TABLE IF EXISTS public.invoices CASCADE;
+DROP TABLE IF EXISTS public.contracts CASCADE;
+DROP TABLE IF EXISTS public.units CASCADE;
+DROP TABLE IF EXISTS public.properties CASCADE;
+DROP TABLE IF EXISTS public.quote_requests CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;`,
+      status: "pending",
+    },
+    {
+      id: "reset-2",
+      name: "Drop all triggers",
+      sql: `
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles CASCADE;
+DROP TRIGGER IF EXISTS update_properties_updated_at ON public.properties CASCADE;
+DROP TRIGGER IF EXISTS update_units_updated_at ON public.units CASCADE;
+DROP TRIGGER IF EXISTS update_contracts_updated_at ON public.contracts CASCADE;
+DROP TRIGGER IF EXISTS update_invoices_updated_at ON public.invoices CASCADE;
+DROP TRIGGER IF EXISTS update_appointments_updated_at ON public.appointments CASCADE;
+DROP TRIGGER IF EXISTS update_maintenance_requests_updated_at ON public.maintenance_requests CASCADE;
+DROP TRIGGER IF EXISTS update_quote_requests_updated_at ON public.quote_requests CASCADE;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users CASCADE;
+DROP TRIGGER IF EXISTS update_unit_occupancy_trigger ON public.contracts CASCADE;`,
+      status: "pending",
+    },
+    {
+      id: "reset-3",
+      name: "Drop all functions",
+      sql: `
+DROP FUNCTION IF EXISTS public.update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS update_unit_occupancy() CASCADE;`,
+      status: "pending",
+    },
+    {
+      id: "reset-4",
+      name: "Drop all enum types",
+      sql: `
+DROP TYPE IF EXISTS maintenance_status CASCADE;
+DROP TYPE IF EXISTS contract_status CASCADE;
+DROP TYPE IF EXISTS appointment_status CASCADE;
+DROP TYPE IF EXISTS invoice_status CASCADE;
+DROP TYPE IF EXISTS user_role CASCADE;`,
+      status: "pending",
+    },
+  ]
+
+  const repairSteps: SQLStep[] = [
+    {
+      id: "repair-1",
+      name: "Create/Recreate trigger function first",
+      sql: `
+DROP FUNCTION IF EXISTS public.update_updated_at_column() CASCADE;
+
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;`,
+      status: "pending",
+    },
+    {
+      id: "repair-2",
+      name: "Add missing columns to profiles",
+      sql: `
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'first_name') THEN
+    ALTER TABLE public.profiles ADD COLUMN first_name TEXT;
+    RAISE NOTICE 'Added first_name to profiles';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'last_name') THEN
+    ALTER TABLE public.profiles ADD COLUMN last_name TEXT;
+    RAISE NOTICE 'Added last_name to profiles';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'phone') THEN
+    ALTER TABLE public.profiles ADD COLUMN phone TEXT;
+    RAISE NOTICE 'Added phone to profiles';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'avatar_url') THEN
+    ALTER TABLE public.profiles ADD COLUMN avatar_url TEXT;
+    RAISE NOTICE 'Added avatar_url to profiles';
+  END IF;
+END $$;`,
+      status: "pending",
+    },
+    {
+      id: "repair-3",
+      name: "Add missing columns to properties",
+      sql: `
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'properties' AND column_name = 'total_units') THEN
+    ALTER TABLE public.properties ADD COLUMN total_units INTEGER NOT NULL DEFAULT 0;
+    RAISE NOTICE 'Added total_units to properties';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'properties' AND column_name = 'description') THEN
+    ALTER TABLE public.properties ADD COLUMN description TEXT;
+    RAISE NOTICE 'Added description to properties';
+  END IF;
+END $$;`,
+      status: "pending",
+    },
+    {
+      id: "repair-4",
+      name: "Add missing tenant_id to invoices",
+      sql: `
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_schema = 'public' AND table_name = 'invoices' AND column_name = 'tenant_id') THEN
+    ALTER TABLE public.invoices ADD COLUMN tenant_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
+    RAISE NOTICE 'Added tenant_id to invoices';
+    
+    -- Try to populate from contracts
+    UPDATE public.invoices i
+    SET tenant_id = c.tenant_id
+    FROM public.contracts c
+    WHERE i.contract_id = c.id AND i.tenant_id IS NULL;
+  END IF;
+END $$;`,
+      status: "pending",
+    },
+    {
+      id: "repair-5",
+      name: "Drop and recreate all triggers",
+      sql: `
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+DROP TRIGGER IF EXISTS update_properties_updated_at ON public.properties;
+DROP TRIGGER IF EXISTS update_units_updated_at ON public.units;
+DROP TRIGGER IF EXISTS update_contracts_updated_at ON public.contracts;
+DROP TRIGGER IF EXISTS update_invoices_updated_at ON public.invoices;
+DROP TRIGGER IF EXISTS update_appointments_updated_at ON public.appointments;
+DROP TRIGGER IF EXISTS update_maintenance_requests_updated_at ON public.maintenance_requests;
+DROP TRIGGER IF EXISTS update_quote_requests_updated_at ON public.quote_requests;
+
+-- Recreate triggers
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_properties_updated_at BEFORE UPDATE ON public.properties FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_units_updated_at BEFORE UPDATE ON public.units FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_contracts_updated_at BEFORE UPDATE ON public.contracts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_invoices_updated_at BEFORE UPDATE ON public.invoices FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_appointments_updated_at BEFORE UPDATE ON public.appointments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_maintenance_requests_updated_at BEFORE UPDATE ON public.maintenance_requests FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_quote_requests_updated_at BEFORE UPDATE ON public.quote_requests FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();`,
+      status: "pending",
+    },
+  ]
 
   const executeStep = async (step: SQLStep) => {
     console.log("[v0] Executing SQL step:", step.name)
@@ -280,6 +451,30 @@ export default function SQLDebugPage() {
     }
   }
 
+  const runRepairSteps = async () => {
+    setIsRunning(true)
+    setShowRepair(true)
+
+    const repairStepsState = [...repairSteps]
+
+    for (let i = 0; i < repairStepsState.length; i++) {
+      repairStepsState[i].status = "running"
+      setSteps([...repairStepsState])
+
+      const result = await executeStep(repairStepsState[i])
+
+      repairStepsState[i].status = result.success ? "success" : "error"
+      repairStepsState[i].error = result.error
+      repairStepsState[i].duration = result.duration
+
+      setSteps([...repairStepsState])
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    setIsRunning(false)
+  }
+
   const runAllSteps = async () => {
     setIsRunning(true)
 
@@ -313,6 +508,38 @@ export default function SQLDebugPage() {
     setIsRunning(false)
   }
 
+  const runResetSteps = async () => {
+    const confirmed = window.confirm(
+      "⚠️ WARNING: This will DELETE ALL DATA in the database!\n\nAre you absolutely sure you want to continue?",
+    )
+
+    if (!confirmed) return
+
+    setIsRunning(true)
+    setShowReset(true)
+
+    const resetStepsState = [...resetSteps]
+
+    for (let i = 0; i < resetStepsState.length; i++) {
+      resetStepsState[i].status = "running"
+      setSteps([...resetStepsState])
+
+      const result = await executeStep(resetStepsState[i])
+
+      resetStepsState[i].status = result.success ? "success" : "error"
+      resetStepsState[i].error = result.error
+      resetStepsState[i].duration = result.duration
+
+      setSteps([...resetStepsState])
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    setIsRunning(false)
+
+    alert("Database reset complete! Now run the migration steps to recreate everything.")
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-6">
@@ -338,9 +565,49 @@ $$;`}
         </AlertDescription>
       </Alert>
 
-      <div className="mb-6">
-        <Button onClick={runAllSteps} disabled={isRunning} size="lg" className="w-full">
-          {isRunning ? (
+      <Alert className="mb-6 border-orange-500 bg-orange-50">
+        <AlertDescription>
+          <strong>Database Issues Detected?</strong> If you see errors about missing columns or existing triggers, run
+          the repair script first to fix existing database structure.
+        </AlertDescription>
+      </Alert>
+
+      <Alert className="mb-6 border-red-500 bg-red-50">
+        <AlertDescription>
+          <strong>⚠️ Nuclear Option:</strong> If repairs don't work, you can completely reset the database and start
+          fresh. This will DELETE ALL DATA!
+        </AlertDescription>
+      </Alert>
+
+      <div className="mb-6 flex gap-4">
+        <Button onClick={runResetSteps} disabled={isRunning} variant="destructive" className="flex-1">
+          {isRunning && showReset ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Resetting Database...
+            </>
+          ) : (
+            <>
+              <XCircle className="mr-2 h-4 w-4" />
+              Reset Database (Delete All)
+            </>
+          )}
+        </Button>
+        <Button onClick={runRepairSteps} disabled={isRunning} variant="outline" className="flex-1 bg-transparent">
+          {isRunning && showRepair ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Repairing Database...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Run Repair Script
+            </>
+          )}
+        </Button>
+        <Button onClick={runAllSteps} disabled={isRunning} size="lg" className="flex-1">
+          {isRunning && !showRepair && !showReset ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Running Migrations...
@@ -351,7 +618,88 @@ $$;`}
         </Button>
       </div>
 
+      {showReset && (
+        <div className="space-y-2 mb-6">
+          <h2 className="text-xl font-semibold mb-3 text-red-600">Reset Steps (DESTRUCTIVE)</h2>
+          {resetSteps.map((step, index) => (
+            <Card
+              key={step.id}
+              className={
+                step.status === "success"
+                  ? "border-green-500"
+                  : step.status === "error"
+                    ? "border-red-500"
+                    : step.status === "running"
+                      ? "border-blue-500"
+                      : "border-red-300"
+              }
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {step.status === "success" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                    {step.status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
+                    {step.status === "running" && <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />}
+                    <CardTitle className="text-base">
+                      Reset {index + 1}: {step.name}
+                    </CardTitle>
+                  </div>
+                  {step.duration !== undefined && (
+                    <span className="text-xs text-muted-foreground">{step.duration}ms</span>
+                  )}
+                </div>
+                {step.error && <CardDescription className="text-red-500 mt-2">Error: {step.error}</CardDescription>}
+              </CardHeader>
+              <CardContent>
+                <pre className="text-xs bg-muted p-2 rounded overflow-x-auto max-h-32 overflow-y-auto">{step.sql}</pre>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {showRepair && (
+        <div className="space-y-2 mb-6">
+          <h2 className="text-xl font-semibold mb-3">Repair Steps</h2>
+          {repairSteps.map((step, index) => (
+            <Card
+              key={step.id}
+              className={
+                step.status === "success"
+                  ? "border-green-500"
+                  : step.status === "error"
+                    ? "border-red-500"
+                    : step.status === "running"
+                      ? "border-blue-500"
+                      : ""
+              }
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {step.status === "success" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                    {step.status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
+                    {step.status === "running" && <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />}
+                    <CardTitle className="text-base">
+                      Repair {index + 1}: {step.name}
+                    </CardTitle>
+                  </div>
+                  {step.duration !== undefined && (
+                    <span className="text-xs text-muted-foreground">{step.duration}ms</span>
+                  )}
+                </div>
+                {step.error && <CardDescription className="text-red-500 mt-2">Error: {step.error}</CardDescription>}
+              </CardHeader>
+              <CardContent>
+                <pre className="text-xs bg-muted p-2 rounded overflow-x-auto max-h-32 overflow-y-auto">{step.sql}</pre>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-2">
+        <h2 className="text-xl font-semibold mb-3">Migration Steps</h2>
         {steps.map((step, index) => (
           <Card
             key={step.id}
