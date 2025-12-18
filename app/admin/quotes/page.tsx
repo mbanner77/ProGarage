@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic'
+
 import { getQuoteRequests } from "@/lib/actions/quotes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageSquare, Mail, Phone, Warehouse } from "lucide-react"
+import { MessageSquare, Mail, Phone, Building2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export default async function AdminQuotesPage() {

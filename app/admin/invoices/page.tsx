@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getInvoices } from "@/lib/actions/invoices"
 import { getTenants } from "@/lib/actions/users"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

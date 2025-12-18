@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getAppointments } from "@/lib/actions/appointments"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, MapPin } from "lucide-react"

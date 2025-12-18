@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getMaintenanceRequests } from "@/lib/actions/maintenance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"

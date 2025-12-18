@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getTenantContract } from "@/lib/actions/contracts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getAdminStats } from "@/lib/actions/stats"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Warehouse, Users, FileText, Calendar, TrendingUp, AlertCircle, Wrench } from "lucide-react"

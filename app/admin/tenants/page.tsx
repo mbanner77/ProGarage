@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getContracts } from "@/lib/actions/contracts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Mail, Phone } from "lucide-react"

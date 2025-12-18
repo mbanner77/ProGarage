@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Button } from "@/components/ui/button"
 import { getContracts } from "@/lib/actions/contracts"
 import { getVacantUnits } from "@/lib/actions/units"

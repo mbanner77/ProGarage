@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getCurrentUser } from "@/lib/actions/auth"
 import { getTenantContract } from "@/lib/actions/contracts"
 import { getTenantInvoices } from "@/lib/actions/invoices"

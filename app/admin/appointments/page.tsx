@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getAppointments } from "@/lib/actions/appointments"
 import { getProperties } from "@/lib/actions/properties"
 import { getManagers } from "@/lib/actions/users"

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getTenantInvoices } from "@/lib/actions/invoices"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Download, CreditCard } from "lucide-react"

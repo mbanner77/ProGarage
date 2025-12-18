@@ -1,7 +1,9 @@
+export const dynamic = 'force-dynamic'
+
 import { getProperties } from "@/lib/actions/properties"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, Warehouse, MapPin } from "lucide-react"
+import { Plus, Building2, MapPin } from "lucide-react"
 import Link from "next/link"
 import { PropertyDialog } from "@/components/admin/property-dialog"
 
