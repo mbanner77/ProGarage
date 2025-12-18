@@ -2,8 +2,6 @@
 
 *Property Management System built with Next.js, PostgreSQL (Prisma), and TypeScript*
 
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/hNW03nf7K7X)
-
 ## 🚀 Quick Start
 
 ### 1. First-Time Setup
