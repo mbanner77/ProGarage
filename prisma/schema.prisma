@@ -284,6 +284,13 @@ model SystemSettings {
   // Notification Settings
   notifyOnNewInvoice  Boolean @default(true) @map("notify_on_new_invoice")
   
+  // Invoice Ninja Configuration
+  invoiceNinjaEnabled   Boolean @default(false) @map("invoice_ninja_enabled")
+  invoiceNinjaUrl       String? @map("invoice_ninja_url")
+  invoiceNinjaApiKey    String? @map("invoice_ninja_api_key")
+  invoiceNinjaCompanyId String? @map("invoice_ninja_company_id")
+  useInvoiceNinjaForNew Boolean @default(false) @map("use_invoice_ninja_for_new")
+  
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

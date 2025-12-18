@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import type { InvoiceStatus } from "@prisma/client"
 import { sendInvoiceNotification } from "@/lib/services/email"
+import { createInvoiceInNinja, markInvoiceAsSent, isInvoiceNinjaEnabled } from "@/lib/services/invoice-ninja"
 
 export async function getInvoices() {
   try {
@@ -104,6 +105,35 @@ export async function createInvoice(input: FormData | {
 
     const session = await getSession()
 
+    // Get tenant info for Invoice Ninja
+    const tenant = await prisma.user.findUnique({
+      where: { id: invoice.tenantId },
+      select: { email: true, firstName: true, lastName: true },
+    })
+
+    // Check if Invoice Ninja should be used
+    const useNinja = await isInvoiceNinjaEnabled()
+    let externalInvoiceId: string | null = null
+
+    if (useNinja && tenant) {
+      const ninjaResult = await createInvoiceInNinja({
+        tenantEmail: tenant.email,
+        tenantFirstName: tenant.firstName,
+        tenantLastName: tenant.lastName,
+        amount: invoice.amount,
+        dueDate: invoice.dueDate,
+        description: invoice.description,
+        invoiceNumber: invoice.invoiceNumber,
+      })
+
+      if (ninjaResult) {
+        externalInvoiceId = ninjaResult.id
+        // Mark as sent in Invoice Ninja
+        await markInvoiceAsSent(ninjaResult.id)
+        console.log("[Invoice] Created in Invoice Ninja:", ninjaResult.number)
+      }
+    }
+
     const data = await prisma.invoice.create({
       data: {
         invoiceNumber: invoice.invoiceNumber,
@@ -114,15 +144,11 @@ export async function createInvoice(input: FormData | {
         status: "sent",
         description: invoice.description,
         createdById: invoice.createdById || session?.id,
+        externalInvoiceId,
       },
     })
 
     // Send email notification to tenant
-    const tenant = await prisma.user.findUnique({
-      where: { id: invoice.tenantId },
-      select: { email: true, firstName: true, lastName: true },
-    })
-
     if (tenant) {
       sendInvoiceNotification({
         id: data.id,
@@ -135,7 +161,7 @@ export async function createInvoice(input: FormData | {
     }
 
     revalidatePath("/admin/invoices")
-    return { data, success: true }
+    return { data, success: true, usedInvoiceNinja: !!externalInvoiceId }
   } catch (error) {
     console.error("[v0] createInvoice exception:", error)
     return { error: String(error) }

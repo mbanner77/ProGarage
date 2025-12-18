@@ -130,3 +130,66 @@ export async function testEmailConnection() {
     return { error: String(error) }
   }
 }
+
+export async function updateInvoiceNinjaSettings(data: {
+  invoiceNinjaEnabled: boolean
+  invoiceNinjaUrl?: string
+  invoiceNinjaApiKey?: string
+  invoiceNinjaCompanyId?: string
+  useInvoiceNinjaForNew?: boolean
+}) {
+  try {
+    const settings = await prisma.systemSettings.upsert({
+      where: { id: "settings" },
+      update: {
+        invoiceNinjaEnabled: data.invoiceNinjaEnabled,
+        invoiceNinjaUrl: data.invoiceNinjaUrl || null,
+        invoiceNinjaApiKey: data.invoiceNinjaApiKey || null,
+        invoiceNinjaCompanyId: data.invoiceNinjaCompanyId || null,
+        useInvoiceNinjaForNew: data.useInvoiceNinjaForNew ?? false,
+      },
+      create: {
+        id: "settings",
+        invoiceNinjaEnabled: data.invoiceNinjaEnabled,
+        invoiceNinjaUrl: data.invoiceNinjaUrl || null,
+        invoiceNinjaApiKey: data.invoiceNinjaApiKey || null,
+        invoiceNinjaCompanyId: data.invoiceNinjaCompanyId || null,
+        useInvoiceNinjaForNew: data.useInvoiceNinjaForNew ?? false,
+      },
+    })
+
+    revalidatePath("/admin/settings")
+    return { data: settings, success: true }
+  } catch (error) {
+    console.error("[v0] updateInvoiceNinjaSettings exception:", error)
+    return { error: String(error) }
+  }
+}
+
+export async function testInvoiceNinjaConnection() {
+  try {
+    const settings = await prisma.systemSettings.findUnique({
+      where: { id: "settings" },
+    })
+
+    if (!settings?.invoiceNinjaEnabled || !settings?.invoiceNinjaUrl || !settings?.invoiceNinjaApiKey) {
+      return { error: "Invoice Ninja ist nicht konfiguriert" }
+    }
+
+    const response = await fetch(`${settings.invoiceNinjaUrl}/api/v1/ping`, {
+      headers: {
+        "X-Api-Token": settings.invoiceNinjaApiKey,
+        "Content-Type": "application/json",
+      },
+    })
+
+    if (!response.ok) {
+      return { error: `API Fehler: ${response.status}` }
+    }
+
+    return { success: true, message: "Verbindung erfolgreich!" }
+  } catch (error) {
+    console.error("[v0] testInvoiceNinjaConnection exception:", error)
+    return { error: String(error) }
+  }
+}

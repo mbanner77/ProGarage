@@ -2,9 +2,10 @@ export const dynamic = 'force-dynamic'
 
 import { getSettings } from "@/lib/actions/settings"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CreditCard, Mail, Settings } from "lucide-react"
+import { CreditCard, Mail, Settings, FileText } from "lucide-react"
 import { StripeSettingsForm } from "@/components/admin/stripe-settings-form"
 import { EmailSettingsForm } from "@/components/admin/email-settings-form"
+import { InvoiceNinjaSettingsForm } from "@/components/admin/invoice-ninja-settings-form"
 
 export default async function SettingsPage() {
   const { data: settings } = await getSettings()
@@ -20,10 +21,14 @@ export default async function SettingsPage() {
       </div>
 
       <Tabs defaultValue="stripe" className="space-y-6">
-        <TabsList className="bg-muted/50">
+        <TabsList className="bg-muted/50 flex-wrap h-auto">
           <TabsTrigger value="stripe" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            Stripe Zahlung
+            Stripe
+          </TabsTrigger>
+          <TabsTrigger value="invoiceninja" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Invoice Ninja
           </TabsTrigger>
           <TabsTrigger value="email" className="gap-2">
             <Mail className="h-4 w-4" />
@@ -33,6 +38,10 @@ export default async function SettingsPage() {
 
         <TabsContent value="stripe">
           <StripeSettingsForm settings={settings} />
+        </TabsContent>
+
+        <TabsContent value="invoiceninja">
+          <InvoiceNinjaSettingsForm settings={settings} />
         </TabsContent>
 
         <TabsContent value="email">
