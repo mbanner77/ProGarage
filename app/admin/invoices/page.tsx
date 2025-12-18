@@ -1,4 +1,5 @@
 import { getInvoices } from "@/lib/actions/invoices"
+import { getTenants } from "@/lib/actions/users"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -6,7 +7,7 @@ import { InvoiceDialog } from "@/components/admin/invoice-dialog"
 
 export default async function InvoicesPage() {
   const { data: invoices } = await getInvoices()
-  const tenants: any[] = [] // TODO: Add getTenants action
+  const { data: tenants } = await getTenants()
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-10">

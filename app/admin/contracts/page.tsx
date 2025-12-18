@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { getContracts } from "@/lib/actions/contracts"
+import { getVacantUnits } from "@/lib/actions/units"
+import { getTenants } from "@/lib/actions/users"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ContractDialog } from "@/components/admin/contract-dialog"
@@ -7,8 +9,8 @@ import { FileText } from "lucide-react"
 
 export default async function ContractsPage() {
   const { data: contracts } = await getContracts()
-  const units: any[] = [] // TODO: Add getUnits action
-  const tenants: any[] = [] // TODO: Add getTenants action
+  const { data: units } = await getVacantUnits()
+  const { data: tenants } = await getTenants()
 
   const getStatusColor = (status: string) => {
     switch (status) {

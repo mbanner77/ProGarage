@@ -27,7 +27,7 @@ export default async function TenantPortal() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-balance">
-            Willkommen, {profile?.first_name || "Mieter"}
+            Willkommen, {profile?.firstName || "Mieter"}
           </h1>
           <p className="text-muted-foreground">Ihr persönlicher Mieterbereich</p>
         </div>
