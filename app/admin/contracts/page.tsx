@@ -58,9 +58,9 @@ export default async function ContractsPage() {
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="size-5 text-primary" />
-                    {contract.unit?.property?.name} - {contract.unit?.unit_number}
+                    {contract.unit?.property?.name} - {contract.unit?.unitNumber}
                   </CardTitle>
-                  <CardDescription>{contract.tenant?.full_name || contract.tenant?.email}</CardDescription>
+                  <CardDescription>{contract.tenant?.firstName} {contract.tenant?.lastName}</CardDescription>
                 </div>
                 <Badge className={getStatusColor(contract.status)}>{getStatusText(contract.status)}</Badge>
               </div>
@@ -69,7 +69,7 @@ export default async function ContractsPage() {
               <div className="gap-6 grid sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <p className="font-medium text-muted-foreground text-sm">Miete</p>
-                  <p className="font-semibold text-lg">{contract.monthly_rent.toLocaleString("de-DE")} €</p>
+                  <p className="font-semibold text-lg">{Number(contract.monthlyRent).toLocaleString("de-DE")} €</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground text-sm">Kaution</p>
@@ -77,16 +77,16 @@ export default async function ContractsPage() {
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground text-sm">Beginn</p>
-                  <p className="font-semibold text-lg">{new Date(contract.start_date).toLocaleDateString("de-DE")}</p>
+                  <p className="font-semibold text-lg">{new Date(contract.startDate).toLocaleDateString("de-DE")}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground text-sm">Ende</p>
                   <p className="font-semibold text-lg">
-                    {contract.end_date ? new Date(contract.end_date).toLocaleDateString("de-DE") : "Unbefristet"}
+                    {contract.endDate ? new Date(contract.endDate).toLocaleDateString("de-DE") : "Unbefristet"}
                   </p>
                 </div>
               </div>
-              {contract.contract_file_url && (
+              {contract.notes && (
                 <div className="mt-4">
                   <Button variant="outline" size="sm">
                     Vertrag anzeigen

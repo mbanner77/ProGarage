@@ -28,10 +28,10 @@ export default async function TenantsPage() {
                   </div>
                   <div>
                     <CardTitle>
-                      {contract.tenant.first_name} {contract.tenant.last_name}
+                      {contract.tenant.firstName} {contract.tenant.lastName}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2">
-                      {contract.unit.property.name} - Einheit {contract.unit.unit_number}
+                      {contract.unit.property.name} - Einheit {contract.unit.unitNumber}
                     </CardDescription>
                   </div>
                 </div>
@@ -62,11 +62,11 @@ export default async function TenantsPage() {
                 )}
                 <div className="text-sm">
                   <span className="text-muted-foreground">Miete: </span>
-                  <span className="font-medium">{contract.monthly_rent.toFixed(2)} €</span>
+                  <span className="font-medium">{Number(contract.monthlyRent).toFixed(2)} €</span>
                 </div>
                 <div className="text-sm">
                   <span className="text-muted-foreground">Von: </span>
-                  <span className="font-medium">{new Date(contract.start_date).toLocaleDateString("de-DE")}</span>
+                  <span className="font-medium">{new Date(contract.startDate).toLocaleDateString("de-DE")}</span>
                 </div>
               </div>
             </CardContent>

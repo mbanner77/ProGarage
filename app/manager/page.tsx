@@ -84,11 +84,11 @@ export default async function ManagerDashboard() {
                     <MapPin className="h-3 w-3" />
                     <span>
                       {appointment.property?.name}
-                      {appointment.unit && ` - Einheit ${appointment.unit.unit_number}`}
+                      {appointment.unit && ` - Einheit ${appointment.unit.unitNumber}`}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(appointment.scheduled_date).toLocaleTimeString("de-DE", {
+                    {new Date(appointment.scheduledDate).toLocaleTimeString("de-DE", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -136,7 +136,7 @@ export default async function ManagerDashboard() {
                     <MapPin className="h-3 w-3" />
                     <span>
                       {request.property?.name}
-                      {request.unit && ` - Einheit ${request.unit.unit_number}`}
+                      {request.unit && ` - Einheit ${request.unit.unitNumber}`}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">{request.description}</p>

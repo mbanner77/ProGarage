@@ -121,17 +121,17 @@ export default async function ManagerMaintenancePage() {
                     <MapPin className="h-3 w-3" />
                     <span>
                       {request.property?.name}
-                      {request.unit && ` - Einheit ${request.unit.unit_number}`}
+                      {request.unit && ` - Einheit ${request.unit.unitNumber}`}
                     </span>
                   </div>
                   {request.tenant && (
                     <p className="text-sm text-muted-foreground">
-                      Mieter: {request.tenant.first_name} {request.tenant.last_name}
+                      Mieter: {request.tenant.firstName} {request.tenant.lastName}
                     </p>
                   )}
                   <p className="text-sm text-muted-foreground">{request.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    Erstellt: {new Date(request.created_at).toLocaleDateString("de-DE")}
+                    Erstellt: {new Date(request.createdAt).toLocaleDateString("de-DE")}
                   </p>
                 </div>
               </div>

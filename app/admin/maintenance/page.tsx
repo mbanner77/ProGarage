@@ -46,7 +46,7 @@ export default async function AdminMaintenancePage() {
                     <CardDescription className="flex items-center gap-2">
                       <MapPin className="h-3 w-3" />
                       {request.property?.name}
-                      {request.unit && ` - Einheit ${request.unit.unit_number}`}
+                      {request.unit && ` - Einheit ${request.unit.unitNumber}`}
                     </CardDescription>
                   </div>
                 </div>
@@ -86,13 +86,13 @@ export default async function AdminMaintenancePage() {
                   <div className="text-sm">
                     <span className="text-muted-foreground">Mieter: </span>
                     <span className="font-medium">
-                      {request.tenant.first_name} {request.tenant.last_name}
+                      {request.tenant.firstName} {request.tenant.lastName}
                     </span>
                   </div>
                 )}
                 <div className="text-sm">
                   <span className="text-muted-foreground">Erstellt: </span>
-                  <span className="font-medium">{new Date(request.created_at).toLocaleDateString("de-DE")}</span>
+                  <span className="font-medium">{new Date(request.createdAt).toLocaleDateString("de-DE")}</span>
                 </div>
                 <div className="col-span-full text-sm">
                   <span className="text-muted-foreground">Beschreibung: </span>

@@ -83,11 +83,11 @@ export default async function ManagerAppointmentsPage() {
                     <MapPin className="h-3 w-3" />
                     <span>
                       {appointment.property?.name}
-                      {appointment.unit && ` - Einheit ${appointment.unit.unit_number}`}
+                      {appointment.unit && ` - Einheit ${appointment.unit.unitNumber}`}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(appointment.scheduled_date).toLocaleDateString("de-DE", {
+                    {new Date(appointment.scheduledDate).toLocaleDateString("de-DE", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",

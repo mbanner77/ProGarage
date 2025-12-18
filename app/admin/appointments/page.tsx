@@ -36,7 +36,7 @@ export default async function AppointmentsPage() {
                     <CardTitle>{appointment.title}</CardTitle>
                     <CardDescription>
                       {appointment.property?.name}
-                      {appointment.unit && ` - Einheit ${appointment.unit.unit_number}`}
+                      {appointment.unit && ` - Einheit ${appointment.unit.unitNumber}`}
                     </CardDescription>
                   </div>
                 </div>
@@ -62,7 +62,7 @@ export default async function AppointmentsPage() {
                 <div className="text-sm">
                   <span className="text-muted-foreground">Datum: </span>
                   <span className="font-medium">
-                    {new Date(appointment.scheduled_date).toLocaleDateString("de-DE", {
+                    {new Date(appointment.scheduledDate).toLocaleDateString("de-DE", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
@@ -71,11 +71,11 @@ export default async function AppointmentsPage() {
                     })}
                   </span>
                 </div>
-                {appointment.assigned && (
+                {appointment.assignedTo && (
                   <div className="text-sm">
                     <span className="text-muted-foreground">Zugewiesen: </span>
                     <span className="font-medium">
-                      {appointment.assigned.first_name} {appointment.assigned.last_name}
+                      {appointment.assignedTo?.firstName} {appointment.assignedTo?.lastName}
                     </span>
                   </div>
                 )}
