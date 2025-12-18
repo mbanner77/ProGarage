@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import type { InvoiceStatus } from "@prisma/client"
+import { sendInvoiceNotification } from "@/lib/services/email"
 
 export async function getInvoices() {
   try {
@@ -115,6 +116,23 @@ export async function createInvoice(input: FormData | {
         createdById: invoice.createdById || session?.id,
       },
     })
+
+    // Send email notification to tenant
+    const tenant = await prisma.user.findUnique({
+      where: { id: invoice.tenantId },
+      select: { email: true, firstName: true, lastName: true },
+    })
+
+    if (tenant) {
+      sendInvoiceNotification({
+        id: data.id,
+        invoiceNumber: data.invoiceNumber,
+        amount: Number(data.amount),
+        dueDate: data.dueDate,
+        description: data.description,
+        tenant,
+      }).catch((err) => console.error("[Invoice] Email notification failed:", err))
+    }
 
     revalidatePath("/admin/invoices")
     return { data, success: true }

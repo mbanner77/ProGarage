@@ -1,13 +1,17 @@
 export const dynamic = 'force-dynamic'
 
 import { getTenantInvoices } from "@/lib/actions/invoices"
+import { getSettings } from "@/lib/actions/settings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Download, CreditCard } from "lucide-react"
+import { FileText, Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { PayInvoiceButton } from "@/components/portal/pay-invoice-button"
 
 export default async function TenantInvoicesPage() {
   const { data: invoices } = await getTenantInvoices()
+  const { data: settings } = await getSettings()
+  const stripeEnabled = settings?.stripeEnabled ?? false
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -67,11 +71,8 @@ export default async function TenantInvoicesPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  {invoice.status !== "paid" && (
-                    <Button size="sm" className="gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      Jetzt bezahlen
-                    </Button>
+                  {invoice.status !== "paid" && stripeEnabled && (
+                    <PayInvoiceButton invoiceId={invoice.id} />
                   )}
                   <Button variant="outline" size="sm" className="gap-2 bg-transparent">
                     <Download className="h-4 w-4" />

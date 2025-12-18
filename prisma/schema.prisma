@@ -146,6 +146,10 @@ model Invoice {
   createdById       String?       @map("created_by")
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")
+  
+  // Stripe fields
+  stripePaymentIntentId String? @map("stripe_payment_intent_id")
+  stripeSessionId       String? @map("stripe_session_id")
 
   // Relations
   contract  Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
@@ -256,4 +260,32 @@ model QuoteRequest {
   assignedTo User? @relation("AssignedQuotes", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@map("quote_requests")
+}
+
+model SystemSettings {
+  id        String   @id @default("settings")
+  
+  // Stripe Configuration
+  stripeEnabled       Boolean @default(false) @map("stripe_enabled")
+  stripePublicKey     String? @map("stripe_public_key")
+  stripeSecretKey     String? @map("stripe_secret_key")
+  stripeWebhookSecret String? @map("stripe_webhook_secret")
+  
+  // Email Configuration
+  emailEnabled        Boolean @default(false) @map("email_enabled")
+  smtpHost            String? @map("smtp_host")
+  smtpPort            Int?    @map("smtp_port")
+  smtpUser            String? @map("smtp_user")
+  smtpPassword        String? @map("smtp_password")
+  smtpFromEmail       String? @map("smtp_from_email")
+  smtpFromName        String? @map("smtp_from_name")
+  smtpSecure          Boolean @default(true) @map("smtp_secure")
+  
+  // Notification Settings
+  notifyOnNewInvoice  Boolean @default(true) @map("notify_on_new_invoice")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }
