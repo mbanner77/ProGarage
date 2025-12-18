@@ -199,7 +199,7 @@ export async function createUser(user: {
   phone?: string | null
   role?: UserRole
 }) {
-  console.log("[v0] createUser action called with email:", user.email)
+  console.log("[v0] createUser action called with email:", user.email, "role:", user.role)
 
   try {
     const existingUser = await prisma.user.findUnique({
@@ -211,6 +211,11 @@ export async function createUser(user: {
     }
 
     const hashedPassword = await hashPassword(user.password)
+    
+    // Validate and set role - default to tenant only if not provided
+    const validRoles = ["admin", "property_manager", "tenant", "employee", "janitor"]
+    const userRole = user.role && validRoles.includes(user.role) ? user.role : "tenant"
+    console.log("[v0] Setting user role to:", userRole)
 
     const data = await prisma.user.create({
       data: {
@@ -219,7 +224,7 @@ export async function createUser(user: {
         firstName: user.firstName,
         lastName: user.lastName,
         phone: user.phone,
-        role: user.role || "tenant",
+        role: userRole as UserRole,
       },
       select: {
         id: true,
