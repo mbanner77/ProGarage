@@ -31,7 +31,7 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [janitors, setJanitors] = useState<{ id: string; firstName: string | null; lastName: string | null; email: string }[]>([])
-  const [selectedJanitor, setSelectedJanitor] = useState<string>(request.assignedToId || "")
+  const [selectedJanitor, setSelectedJanitor] = useState<string>(request.assignedToId || "none")
 
   useEffect(() => {
     if (open) {
@@ -63,8 +63,8 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
       return
     }
 
-    // Then assign janitor if selected
-    if (selectedJanitor && selectedJanitor !== request.assignedToId) {
+    // Then assign janitor if selected (and not "none")
+    if (selectedJanitor && selectedJanitor !== "none" && selectedJanitor !== request.assignedToId) {
       const assignResult = await assignMaintenanceToJanitor(request.id, selectedJanitor)
       if (assignResult.error) {
         toast({
@@ -162,7 +162,7 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
                   <SelectValue placeholder="Hausmeister auswählen..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nicht zugewiesen</SelectItem>
+                  <SelectItem value="none">Nicht zugewiesen</SelectItem>
                   {janitors.map((janitor) => (
                     <SelectItem key={janitor.id} value={janitor.id}>
                       {janitor.firstName && janitor.lastName 
