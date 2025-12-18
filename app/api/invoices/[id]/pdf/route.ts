@@ -39,15 +39,19 @@ export async function GET(
     }
 
     // Check access - tenant can only access their own invoices
-    const tenant = invoice.contract?.tenant
+    const contractTenantId = invoice.contract?.tenant?.id
+    const directTenantId = invoice.tenantId
+    
     if (session.role !== "admin" && session.role !== "property_manager") {
-      if (!tenant || tenant.id !== session.id) {
+      // Allow access if user is the tenant (via contract OR direct assignment)
+      const hasAccess = contractTenantId === session.id || directTenantId === session.id
+      if (!hasAccess) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 })
       }
     }
 
     // Get tenant info - either from contract or direct lookup
-    let tenantInfo = tenant
+    let tenantInfo = invoice.contract?.tenant
     if (!tenantInfo && invoice.tenantId) {
       tenantInfo = await prisma.user.findUnique({
         where: { id: invoice.tenantId },
