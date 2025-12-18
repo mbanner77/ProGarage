@@ -52,7 +52,7 @@ export async function getMyAppointments() {
   }
 }
 
-export async function createAppointment(appointment: {
+export async function createAppointment(input: FormData | {
   title: string
   description?: string | null
   propertyId?: string | null
@@ -68,6 +68,18 @@ export async function createAppointment(appointment: {
     if (!session) {
       return { error: "Not authenticated" }
     }
+
+    // Handle both FormData and object input
+    const appointment = input instanceof FormData ? {
+      title: input.get("title") as string,
+      description: input.get("description") as string || null,
+      propertyId: input.get("property_id") as string || null,
+      unitId: input.get("unit_id") as string || null,
+      assignedToId: input.get("assigned_to") as string || null,
+      scheduledDate: new Date(input.get("scheduled_date") as string),
+      priority: input.get("priority") as string || "medium",
+      notes: input.get("notes") as string || null,
+    } : input
 
     const data = await prisma.appointment.create({
       data: {

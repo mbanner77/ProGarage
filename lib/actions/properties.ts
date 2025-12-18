@@ -50,7 +50,7 @@ export async function getPropertyById(id: string) {
   }
 }
 
-export async function createProperty(property: {
+export async function createProperty(input: FormData | {
   name: string
   address: string
   city: string
@@ -58,6 +58,16 @@ export async function createProperty(property: {
   description?: string | null
   propertyManagerId?: string | null
 }) {
+  // Handle both FormData and object input
+  const property = input instanceof FormData ? {
+    name: input.get("name") as string,
+    address: input.get("address") as string,
+    city: input.get("city") as string,
+    postalCode: input.get("postal_code") as string || input.get("postalCode") as string,
+    description: input.get("description") as string || null,
+    propertyManagerId: input.get("property_manager_id") as string || null,
+  } : input
+
   console.log("[v0] createProperty action called with name:", property.name)
 
   try {

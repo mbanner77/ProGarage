@@ -115,7 +115,7 @@ export function AppointmentDialog({ trigger, properties = [], users = [] }: Appo
                 <SelectContent>
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name}
+                      {user.firstName} {user.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>

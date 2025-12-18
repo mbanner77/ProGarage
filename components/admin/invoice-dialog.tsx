@@ -21,7 +21,7 @@ import { createInvoice } from "@/lib/actions/invoices"
 import { toast } from "sonner"
 
 interface InvoiceDialogProps {
-  tenants: Array<{ id: string; first_name: string; last_name: string }>
+  tenants: Array<{ id: string; firstName: string | null; lastName: string | null; email: string }>
 }
 
 export function InvoiceDialog({ tenants }: InvoiceDialogProps) {
@@ -78,7 +78,7 @@ export function InvoiceDialog({ tenants }: InvoiceDialogProps) {
                 <SelectContent>
                   {tenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
-                      {tenant.first_name} {tenant.last_name}
+                      {tenant.firstName} {tenant.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>

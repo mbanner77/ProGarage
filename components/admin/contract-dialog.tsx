@@ -87,7 +87,7 @@ export function ContractDialog({ trigger, units = [], tenants = [] }: ContractDi
                 <SelectContent>
                   {units.map((unit) => (
                     <SelectItem key={unit.id} value={unit.id}>
-                      {unit.property?.name} - Einheit {unit.unit_number}
+                      {unit.property?.name} - Einheit {unit.unitNumber}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -103,7 +103,7 @@ export function ContractDialog({ trigger, units = [], tenants = [] }: ContractDi
                 <SelectContent>
                   {tenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>
-                      {tenant.first_name} {tenant.last_name} ({tenant.email})
+                      {tenant.firstName} {tenant.lastName} ({tenant.email})
                     </SelectItem>
                   ))}
                 </SelectContent>

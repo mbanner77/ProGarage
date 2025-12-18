@@ -100,7 +100,7 @@ export function MaintenanceDialog({ request }: MaintenanceDialogProps) {
               </p>
               {request.tenant && (
                 <p className="mt-2">
-                  <strong>Mieter:</strong> {request.tenant.first_name} {request.tenant.last_name}
+                  <strong>Mieter:</strong> {request.tenant.firstName} {request.tenant.lastName}
                 </p>
               )}
             </div>

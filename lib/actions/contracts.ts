@@ -57,7 +57,7 @@ export async function getTenantContract() {
   }
 }
 
-export async function createContract(contract: {
+export async function createContract(input: FormData | {
   unitId: string
   tenantId: string
   startDate: Date
@@ -68,6 +68,17 @@ export async function createContract(contract: {
   notes?: string | null
 }) {
   try {
+    // Handle both FormData and object input
+    const contract = input instanceof FormData ? {
+      unitId: input.get("unit_id") as string,
+      tenantId: input.get("tenant_id") as string,
+      startDate: new Date(input.get("start_date") as string),
+      endDate: input.get("end_date") ? new Date(input.get("end_date") as string) : null,
+      monthlyRent: parseFloat(input.get("monthly_rent") as string),
+      deposit: input.get("deposit") ? parseFloat(input.get("deposit") as string) : null,
+      notes: input.get("notes") as string || null,
+    } : input
+
     const data = await prisma.contract.create({
       data: {
         unitId: contract.unitId,
@@ -76,7 +87,7 @@ export async function createContract(contract: {
         endDate: contract.endDate,
         monthlyRent: contract.monthlyRent,
         deposit: contract.deposit,
-        status: contract.status || "active",
+        status: "active",
         notes: contract.notes,
       },
     })

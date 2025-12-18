@@ -69,17 +69,39 @@ export async function getTenantInvoices() {
   }
 }
 
-export async function createInvoice(invoice: {
-  invoiceNumber: string
+export async function createInvoice(input: FormData | {
+  invoiceNumber?: string
+  invoice_number?: string
   contractId?: string | null
-  tenantId: string
+  tenantId?: string
+  tenant_id?: string
   amount: number
-  dueDate: Date
+  dueDate?: Date
+  due_date?: string
   status?: InvoiceStatus
   description?: string | null
   createdById?: string | null
 }) {
   try {
+    // Handle both FormData and object input
+    const invoice = input instanceof FormData ? {
+      invoiceNumber: input.get("invoice_number") as string,
+      tenantId: input.get("tenant_id") as string,
+      amount: parseFloat(input.get("amount") as string),
+      dueDate: new Date(input.get("due_date") as string),
+      description: input.get("description") as string || null,
+    } : {
+      invoiceNumber: input.invoiceNumber || input.invoice_number || '',
+      tenantId: input.tenantId || input.tenant_id || '',
+      amount: input.amount,
+      dueDate: input.dueDate || (input.due_date ? new Date(input.due_date) : new Date()),
+      description: input.description,
+      contractId: input.contractId,
+      createdById: input.createdById,
+    }
+
+    const session = await getSession()
+
     const data = await prisma.invoice.create({
       data: {
         invoiceNumber: invoice.invoiceNumber,
@@ -87,9 +109,9 @@ export async function createInvoice(invoice: {
         tenantId: invoice.tenantId,
         amount: invoice.amount,
         dueDate: invoice.dueDate,
-        status: invoice.status || "draft",
+        status: "sent",
         description: invoice.description,
-        createdById: invoice.createdById,
+        createdById: invoice.createdById || session?.id,
       },
     })
 
