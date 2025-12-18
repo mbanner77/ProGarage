@@ -62,7 +62,7 @@ export default async function ContractPage() {
                 {contract.unit?.property?.name}
               </CardTitle>
               <CardDescription>
-                Wohnung {contract.unit?.unit_number} - {contract.unit?.property?.address}
+                Wohnung {contract.unit?.unitNumber} - {contract.unit?.property?.address}
               </CardDescription>
             </div>
             <Badge className={getStatusColor(contract.status)}>{getStatusText(contract.status)}</Badge>
@@ -72,7 +72,7 @@ export default async function ContractPage() {
           <div className="gap-6 grid sm:grid-cols-2">
             <div>
               <p className="mb-2 font-medium text-muted-foreground text-sm">Monatliche Miete</p>
-              <p className="font-bold text-2xl text-primary">{contract.monthly_rent.toLocaleString("de-DE")} €</p>
+              <p className="font-bold text-2xl text-primary">{Number(contract.monthlyRent).toLocaleString("de-DE")} €</p>
             </div>
             <div>
               <p className="mb-2 font-medium text-muted-foreground text-sm">Kaution</p>
@@ -83,12 +83,12 @@ export default async function ContractPage() {
           <div className="gap-6 grid sm:grid-cols-2">
             <div>
               <p className="mb-2 font-medium text-muted-foreground text-sm">Vertragsbeginn</p>
-              <p className="font-semibold text-lg">{new Date(contract.start_date).toLocaleDateString("de-DE")}</p>
+              <p className="font-semibold text-lg">{new Date(contract.startDate).toLocaleDateString("de-DE")}</p>
             </div>
             <div>
               <p className="mb-2 font-medium text-muted-foreground text-sm">Vertragsende</p>
               <p className="font-semibold text-lg">
-                {contract.end_date ? new Date(contract.end_date).toLocaleDateString("de-DE") : "Unbefristet"}
+                {contract.endDate ? new Date(contract.endDate).toLocaleDateString("de-DE") : "Unbefristet"}
               </p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default async function ContractPage() {
           <div className="gap-6 grid sm:grid-cols-3">
             <div>
               <p className="mb-2 font-medium text-muted-foreground text-sm">Wohnfläche</p>
-              <p className="font-semibold text-lg">{contract.unit?.size_sqm || "-"} m²</p>
+              <p className="font-semibold text-lg">{contract.unit?.sizeSqm || "-"} m²</p>
             </div>
             <div>
               <p className="mb-2 font-medium text-muted-foreground text-sm">Zimmer</p>
@@ -108,7 +108,7 @@ export default async function ContractPage() {
             </div>
           </div>
 
-          {contract.contract_file_url && (
+          {contract.notes && (
             <div className="pt-4 border-t">
               <Button className="w-full sm:w-auto">
                 <Download className="mr-2 size-4" />

@@ -59,16 +59,16 @@ export default async function TenantPortal() {
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="text-sm">
                   <span className="text-muted-foreground">Einheit: </span>
-                  <span className="font-medium">{contract.unit.unit_number}</span>
+                  <span className="font-medium">{contract.unit.unitNumber}</span>
                 </div>
                 <div className="text-sm">
                   <span className="text-muted-foreground">Monatliche Miete: </span>
-                  <span className="font-medium">{Number(contract.monthly_rent).toFixed(2)} €</span>
+                  <span className="font-medium">{Number(contract.monthlyRent).toFixed(2)} €</span>
                 </div>
                 <div className="text-sm">
                   <span className="text-muted-foreground">Größe: </span>
                   <span className="font-medium">
-                    {contract.unit.size_sqm ? `${Number(contract.unit.size_sqm)} m²` : "N/A"}
+                    {contract.unit.sizeSqm ? `${Number(contract.unit.sizeSqm)} m²` : "N/A"}
                   </span>
                 </div>
               </div>

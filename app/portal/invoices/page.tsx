@@ -41,7 +41,7 @@ export default async function TenantInvoicesPage() {
                     <FileText className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle>Rechnung #{invoice.invoice_number}</CardTitle>
+                    <CardTitle>Rechnung #{invoice.invoiceNumber}</CardTitle>
                     <CardDescription>{invoice.description || "Monatliche Miete"}</CardDescription>
                   </div>
                 </div>
@@ -57,12 +57,12 @@ export default async function TenantInvoicesPage() {
                   </div>
                   <div className="text-sm">
                     <span className="text-muted-foreground">Fällig: </span>
-                    <span className="font-medium">{new Date(invoice.due_date).toLocaleDateString("de-DE")}</span>
+                    <span className="font-medium">{new Date(invoice.dueDate).toLocaleDateString("de-DE")}</span>
                   </div>
-                  {invoice.paid_date && (
+                  {invoice.paidDate && (
                     <div className="text-sm">
                       <span className="text-muted-foreground">Bezahlt: </span>
-                      <span className="font-medium">{new Date(invoice.paid_date).toLocaleDateString("de-DE")}</span>
+                      <span className="font-medium">{new Date(invoice.paidDate).toLocaleDateString("de-DE")}</span>
                     </div>
                   )}
                 </div>
