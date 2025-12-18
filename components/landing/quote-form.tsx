@@ -22,12 +22,12 @@ export function QuoteForm() {
 
     const formData = new FormData(e.currentTarget)
     const data = {
-      first_name: formData.get("firstName") as string,
-      last_name: formData.get("lastName") as string,
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
-      company_name: formData.get("company") as string,
-      property_count: formData.get("propertyCount") ? Number.parseInt(formData.get("propertyCount") as string) : null,
+      companyName: formData.get("company") as string,
+      propertyCount: formData.get("propertyCount") ? Number.parseInt(formData.get("propertyCount") as string) : null,
       message: formData.get("message") as string,
     }
 
@@ -50,14 +50,14 @@ export function QuoteForm() {
 
   if (isSuccess) {
     return (
-      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+      <Card className="border-orange-200 bg-card/50 backdrop-blur-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-full bg-primary/20 p-4">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
+          <div className="rounded-full bg-orange-100 p-4">
+            <CheckCircle2 className="h-8 w-8 text-orange-500" />
           </div>
           <h3 className="mt-6 text-xl font-semibold">Vielen Dank für Ihre Anfrage!</h3>
           <p className="mt-2 text-center text-sm text-muted-foreground">
-            Wir haben Ihre Anfrage erhalten und werden uns innerhalb von 24 Stunden bei Ihnen melden.
+            Wir haben Ihre Garagenankrage erhalten und melden uns schnellstmöglich bei Ihnen.
           </p>
         </CardContent>
       </Card>
@@ -65,57 +65,57 @@ export function QuoteForm() {
   }
 
   return (
-    <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+    <Card className="border-orange-200 bg-card/50 backdrop-blur-sm">
       <CardContent className="p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="firstName">Vorname *</Label>
-              <Input id="firstName" name="firstName" required placeholder="Max" />
+              <Input id="firstName" name="firstName" required placeholder="Max" className="border-orange-200 focus:border-orange-400" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Nachname *</Label>
-              <Input id="lastName" name="lastName" required placeholder="Mustermann" />
+              <Input id="lastName" name="lastName" required placeholder="Mustermann" className="border-orange-200 focus:border-orange-400" />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">E-Mail *</Label>
-            <Input id="email" name="email" type="email" required placeholder="max@beispiel.de" />
+            <Input id="email" name="email" type="email" required placeholder="max@beispiel.de" className="border-orange-200 focus:border-orange-400" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="phone">Telefon</Label>
-            <Input id="phone" name="phone" type="tel" placeholder="+49 123 456789" />
+            <Input id="phone" name="phone" type="tel" placeholder="+49 123 456789" className="border-orange-200 focus:border-orange-400" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="company">Firma/Unternehmen</Label>
-            <Input id="company" name="company" placeholder="Mustermann Immobilien GmbH" />
+            <Label htmlFor="company">Gewünschter Standort / PLZ</Label>
+            <Input id="company" name="company" placeholder="z.B. München, 80331" className="border-orange-200 focus:border-orange-400" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="propertyCount">Anzahl der Einheiten</Label>
-            <Input id="propertyCount" name="propertyCount" type="number" placeholder="20" />
+            <Label htmlFor="propertyCount">Anzahl benötigter Garagen</Label>
+            <Input id="propertyCount" name="propertyCount" type="number" placeholder="1" className="border-orange-200 focus:border-orange-400" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message">Nachricht</Label>
+            <Label htmlFor="message">Ihre Nachricht / Wünsche</Label>
             <Textarea
               id="message"
               name="message"
-              placeholder="Beschreiben Sie Ihre Anforderungen..."
+              placeholder="z.B. Garagengröße, Fahrzeugtyp, gewünschter Mietbeginn..."
               rows={4}
-              className="resize-none"
+              className="resize-none border-orange-200 focus:border-orange-400"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Wird gesendet..." : "Angebot anfragen"}
+          <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={isSubmitting}>
+            {isSubmitting ? "Wird gesendet..." : "Garage anfragen"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Mit dem Absenden stimmen Sie unseren Datenschutzbestimmungen zu.
+            Mit dem Absenden stimmen Sie unseren <a href="https://www.maxi-garagen.de/datenschutz" className="text-orange-500 hover:underline">Datenschutzbestimmungen</a> zu.
           </p>
         </form>
       </CardContent>
