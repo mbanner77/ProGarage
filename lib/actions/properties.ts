@@ -1,23 +1,22 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import type { Property } from "@/lib/types/database"
 
 export async function getProperties() {
   console.log("[v0] getProperties action called")
 
   try {
-    const supabase = await createClient()
+    const data = await prisma.property.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        propertyManager: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+      },
+    })
 
-    const { data, error } = await supabase.from("properties").select("*").order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("[v0] getProperties error:", error)
-      return { error: error.message }
-    }
-
-    console.log("[v0] getProperties successful, count:", data?.length || 0)
+    console.log("[v0] getProperties successful, count:", data.length)
     return { data }
   } catch (error) {
     console.error("[v0] getProperties exception:", error)
@@ -29,13 +28,18 @@ export async function getPropertyById(id: string) {
   console.log("[v0] getPropertyById action called with id:", id)
 
   try {
-    const supabase = await createClient()
+    const data = await prisma.property.findUnique({
+      where: { id },
+      include: {
+        units: true,
+        propertyManager: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+      },
+    })
 
-    const { data, error } = await supabase.from("properties").select("*, units(*)").eq("id", id).single()
-
-    if (error) {
-      console.error("[v0] getPropertyById error:", error)
-      return { error: error.message }
+    if (!data) {
+      return { error: "Property not found" }
     }
 
     console.log("[v0] getPropertyById successful")
@@ -46,20 +50,29 @@ export async function getPropertyById(id: string) {
   }
 }
 
-export async function createProperty(property: Omit<Property, "id" | "created_at" | "updated_at">) {
+export async function createProperty(property: {
+  name: string
+  address: string
+  city: string
+  postalCode: string
+  description?: string | null
+  propertyManagerId?: string | null
+}) {
   console.log("[v0] createProperty action called with name:", property.name)
 
   try {
-    const supabase = await createClient()
+    const data = await prisma.property.create({
+      data: {
+        name: property.name,
+        address: property.address,
+        city: property.city,
+        postalCode: property.postalCode,
+        description: property.description,
+        propertyManagerId: property.propertyManagerId,
+      },
+    })
 
-    const { data, error } = await supabase.from("properties").insert(property).select().single()
-
-    if (error) {
-      console.error("[v0] createProperty error:", error)
-      return { error: error.message }
-    }
-
-    console.log("[v0] createProperty successful, ID:", data?.id)
+    console.log("[v0] createProperty successful, ID:", data.id)
     revalidatePath("/admin/properties")
     return { data, success: true }
   } catch (error) {
@@ -68,18 +81,21 @@ export async function createProperty(property: Omit<Property, "id" | "created_at
   }
 }
 
-export async function updateProperty(id: string, property: Partial<Property>) {
+export async function updateProperty(id: string, property: {
+  name?: string
+  address?: string
+  city?: string
+  postalCode?: string
+  description?: string | null
+  propertyManagerId?: string | null
+}) {
   console.log("[v0] updateProperty action called with id:", id)
 
   try {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase.from("properties").update(property).eq("id", id).select().single()
-
-    if (error) {
-      console.error("[v0] updateProperty error:", error)
-      return { error: error.message }
-    }
+    const data = await prisma.property.update({
+      where: { id },
+      data: property,
+    })
 
     console.log("[v0] updateProperty successful")
     revalidatePath("/admin/properties")
@@ -94,14 +110,9 @@ export async function deleteProperty(id: string) {
   console.log("[v0] deleteProperty action called with id:", id)
 
   try {
-    const supabase = await createClient()
-
-    const { error } = await supabase.from("properties").delete().eq("id", id)
-
-    if (error) {
-      console.error("[v0] deleteProperty error:", error)
-      return { error: error.message }
-    }
+    await prisma.property.delete({
+      where: { id },
+    })
 
     console.log("[v0] deleteProperty successful")
     revalidatePath("/admin/properties")

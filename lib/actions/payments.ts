@@ -1,79 +1,95 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { prisma } from "@/lib/db"
+import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
-import type { Payment } from "@/lib/types/database"
 
 export async function getPayments(invoiceId?: string) {
-  const supabase = await createClient()
+  try {
+    const data = await prisma.payment.findMany({
+      where: invoiceId ? { invoiceId } : undefined,
+      orderBy: { paymentDate: "desc" },
+      include: {
+        invoice: true,
+      },
+    })
 
-  let query = supabase.from("payments").select("*, invoice:invoices(*)")
-
-  if (invoiceId) {
-    query = query.eq("invoice_id", invoiceId)
+    return { data }
+  } catch (error) {
+    console.error("[v0] getPayments exception:", error)
+    return { error: String(error) }
   }
-
-  const { data, error } = await query.order("payment_date", { ascending: false })
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  return { data }
 }
 
-export async function createPayment(payment: Omit<Payment, "id" | "created_at">) {
-  const supabase = await createClient()
+export async function createPayment(payment: {
+  invoiceId: string
+  amount: number
+  paymentDate: Date
+  paymentMethod?: string | null
+  referenceNumber?: string | null
+  notes?: string | null
+}) {
+  try {
+    const session = await getSession()
 
-  // Create payment record
-  const { data: paymentData, error: paymentError } = await supabase.from("payments").insert(payment).select().single()
+    // Create payment record
+    const paymentData = await prisma.payment.create({
+      data: {
+        invoiceId: payment.invoiceId,
+        amount: payment.amount,
+        paymentDate: payment.paymentDate,
+        paymentMethod: payment.paymentMethod,
+        referenceNumber: payment.referenceNumber,
+        notes: payment.notes,
+        createdById: session?.id,
+      },
+    })
 
-  if (paymentError) {
-    return { error: paymentError.message }
-  }
+    // Check if invoice is fully paid
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: payment.invoiceId },
+      select: { amount: true },
+    })
 
-  // Check if invoice is fully paid
-  const { data: invoice, error: invoiceError } = await supabase
-    .from("invoices")
-    .select("amount")
-    .eq("id", payment.invoice_id)
-    .single()
+    if (invoice) {
+      const allPayments = await prisma.payment.findMany({
+        where: { invoiceId: payment.invoiceId },
+        select: { amount: true },
+      })
 
-  if (!invoiceError && invoice) {
-    const { data: allPayments } = await supabase.from("payments").select("amount").eq("invoice_id", payment.invoice_id)
+      const totalPaid = allPayments.reduce((sum: number, p: { amount: unknown }) => sum + Number(p.amount), 0)
 
-    const totalPaid = allPayments?.reduce((sum, p) => sum + p.amount, 0) || 0
-
-    if (totalPaid >= invoice.amount) {
-      // Mark invoice as paid
-      await supabase
-        .from("invoices")
-        .update({ status: "paid", paid_date: new Date().toISOString() })
-        .eq("id", payment.invoice_id)
+      if (totalPaid >= Number(invoice.amount)) {
+        // Mark invoice as paid
+        await prisma.invoice.update({
+          where: { id: payment.invoiceId },
+          data: { status: "paid", paidDate: new Date() },
+        })
+      }
     }
-  }
 
-  revalidatePath("/admin/invoices")
-  revalidatePath("/portal/invoices")
-  return { data: paymentData, success: true }
+    revalidatePath("/admin/invoices")
+    revalidatePath("/portal/invoices")
+    return { data: paymentData, success: true }
+  } catch (error) {
+    console.error("[v0] createPayment exception:", error)
+    return { error: String(error) }
+  }
 }
 
 // Simulate Stripe payment integration
 export async function processStripePayment(invoiceId: string, amount: number, paymentMethodId: string) {
-  // In production, this would integrate with Stripe API
-  // For now, we'll simulate a successful payment
-
   try {
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // Create payment record
     const result = await createPayment({
-      invoice_id: invoiceId,
+      invoiceId,
       amount,
-      payment_date: new Date().toISOString(),
-      payment_method: "stripe",
-      reference_number: `stripe_${Math.random().toString(36).substring(7)}`,
+      paymentDate: new Date(),
+      paymentMethod: "stripe",
+      referenceNumber: `stripe_${Math.random().toString(36).substring(7)}`,
     })
 
     return result
@@ -84,16 +100,13 @@ export async function processStripePayment(invoiceId: string, amount: number, pa
 
 // Simulate FIN API bank transfer integration
 export async function initiateBankTransfer(invoiceId: string, amount: number, accountDetails: any) {
-  // In production, this would integrate with FIN API
-  // For now, we'll create a pending payment record
-
   try {
     const result = await createPayment({
-      invoice_id: invoiceId,
+      invoiceId,
       amount,
-      payment_date: new Date().toISOString(),
-      payment_method: "bank_transfer",
-      reference_number: `bank_${Math.random().toString(36).substring(7)}`,
+      paymentDate: new Date(),
+      paymentMethod: "bank_transfer",
+      referenceNumber: `bank_${Math.random().toString(36).substring(7)}`,
     })
 
     return result

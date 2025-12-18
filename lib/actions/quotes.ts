@@ -1,42 +1,66 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import type { QuoteRequest } from "@/lib/types/database"
 
-export async function submitQuoteRequest(request: Omit<QuoteRequest, "id" | "created_at" | "status">) {
-  const supabase = await createClient()
+export async function submitQuoteRequest(request: {
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string | null
+  companyName?: string | null
+  propertyCount?: number | null
+  message?: string | null
+}) {
+  try {
+    const data = await prisma.quoteRequest.create({
+      data: {
+        firstName: request.firstName,
+        lastName: request.lastName,
+        email: request.email,
+        phone: request.phone,
+        companyName: request.companyName,
+        propertyCount: request.propertyCount,
+        message: request.message,
+      },
+    })
 
-  const { data, error } = await supabase.from("quote_requests").insert(request).select().single()
-
-  if (error) {
-    return { error: error.message }
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] submitQuoteRequest exception:", error)
+    return { error: String(error) }
   }
-
-  return { data, success: true }
 }
 
 export async function getQuoteRequests() {
-  const supabase = await createClient()
+  try {
+    const data = await prisma.quoteRequest.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        assignedTo: {
+          select: { id: true, email: true, firstName: true, lastName: true },
+        },
+      },
+    })
 
-  const { data, error } = await supabase.from("quote_requests").select("*").order("created_at", { ascending: false })
-
-  if (error) {
-    return { error: error.message }
+    return { data }
+  } catch (error) {
+    console.error("[v0] getQuoteRequests exception:", error)
+    return { error: String(error) }
   }
-
-  return { data }
 }
 
-export async function updateQuoteStatus(id: string, status: QuoteRequest["status"]) {
-  const supabase = await createClient()
+export async function updateQuoteStatus(id: string, status: string) {
+  try {
+    const data = await prisma.quoteRequest.update({
+      where: { id },
+      data: { status },
+    })
 
-  const { data, error } = await supabase.from("quote_requests").update({ status }).eq("id", id).select().single()
-
-  if (error) {
-    return { error: error.message }
+    revalidatePath("/admin/quotes")
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] updateQuoteStatus exception:", error)
+    return { error: String(error) }
   }
-
-  revalidatePath("/admin/quotes")
-  return { data, success: true }
 }

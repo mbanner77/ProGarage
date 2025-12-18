@@ -1,88 +1,124 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { prisma } from "@/lib/db"
+import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
-import type { Invoice } from "@/lib/types/database"
+import type { InvoiceStatus } from "@prisma/client"
 
 export async function getInvoices() {
-  const supabase = await createClient()
+  try {
+    const data = await prisma.invoice.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        contract: {
+          include: {
+            tenant: {
+              select: { id: true, email: true, firstName: true, lastName: true },
+            },
+            unit: {
+              include: {
+                property: true,
+              },
+            },
+          },
+        },
+        payments: true,
+      },
+    })
 
-  const { data, error } = await supabase
-    .from("invoices")
-    .select(
-      `
-      *,
-      contract:contracts(
-        *,
-        tenant:profiles!contracts_tenant_id_fkey(*),
-        unit:units(*, property:properties(*))
-      )
-    `,
-    )
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    return { error: error.message }
+    return { data }
+  } catch (error) {
+    console.error("[v0] getInvoices exception:", error)
+    return { error: String(error) }
   }
-
-  return { data }
 }
 
 export async function getTenantInvoices() {
-  const supabase = await createClient()
+  try {
+    const session = await getSession()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    if (!session) {
+      return { error: "Not authenticated" }
+    }
 
-  if (!user) {
-    return { error: "Not authenticated" }
+    const data = await prisma.invoice.findMany({
+      where: {
+        contract: {
+          tenantId: session.id,
+        },
+      },
+      orderBy: { dueDate: "desc" },
+      include: {
+        contract: {
+          include: {
+            unit: {
+              include: {
+                property: true,
+              },
+            },
+          },
+        },
+        payments: true,
+      },
+    })
+
+    return { data }
+  } catch (error) {
+    console.error("[v0] getTenantInvoices exception:", error)
+    return { error: String(error) }
   }
-
-  const { data, error } = await supabase
-    .from("invoices")
-    .select(
-      `
-      *,
-      contract:contracts!inner(
-        *,
-        unit:units(*, property:properties(*))
-      )
-    `,
-    )
-    .eq("contract.tenant_id", user.id)
-    .order("due_date", { ascending: false })
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  return { data }
 }
 
-export async function createInvoice(invoice: Omit<Invoice, "id" | "created_at" | "updated_at">) {
-  const supabase = await createClient()
+export async function createInvoice(invoice: {
+  invoiceNumber: string
+  contractId?: string | null
+  tenantId: string
+  amount: number
+  dueDate: Date
+  status?: InvoiceStatus
+  description?: string | null
+  createdById?: string | null
+}) {
+  try {
+    const data = await prisma.invoice.create({
+      data: {
+        invoiceNumber: invoice.invoiceNumber,
+        contractId: invoice.contractId,
+        tenantId: invoice.tenantId,
+        amount: invoice.amount,
+        dueDate: invoice.dueDate,
+        status: invoice.status || "draft",
+        description: invoice.description,
+        createdById: invoice.createdById,
+      },
+    })
 
-  const { data, error } = await supabase.from("invoices").insert(invoice).select().single()
-
-  if (error) {
-    return { error: error.message }
+    revalidatePath("/admin/invoices")
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] createInvoice exception:", error)
+    return { error: String(error) }
   }
-
-  revalidatePath("/admin/invoices")
-  return { data, success: true }
 }
 
-export async function updateInvoiceStatus(id: string, status: Invoice["status"]) {
-  const supabase = await createClient()
+export async function updateInvoiceStatus(id: string, status: InvoiceStatus) {
+  try {
+    const updateData: { status: InvoiceStatus; paidDate?: Date } = { status }
+    
+    if (status === "paid") {
+      updateData.paidDate = new Date()
+    }
 
-  const { data, error } = await supabase.from("invoices").update({ status }).eq("id", id).select().single()
+    const data = await prisma.invoice.update({
+      where: { id },
+      data: updateData,
+    })
 
-  if (error) {
-    return { error: error.message }
+    revalidatePath("/admin/invoices")
+    revalidatePath("/portal/invoices")
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] updateInvoiceStatus exception:", error)
+    return { error: String(error) }
   }
-
-  revalidatePath("/admin/invoices")
-  revalidatePath("/portal/invoices")
-  return { data, success: true }
 }

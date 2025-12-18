@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  property_manager
+  tenant
+  employee
+}
+
+enum ContractStatus {
+  active
+  expired
+  terminated
+}
+
+enum InvoiceStatus {
+  draft
+  sent
+  paid
+  overdue
+  cancelled
+}
+
+enum AppointmentStatus {
+  scheduled
+  completed
+  cancelled
+}
+
+enum MaintenanceStatus {
+  pending
+  in_progress
+  completed
+  cancelled
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  firstName     String?   @map("first_name")
+  lastName      String?   @map("last_name")
+  phone         String?
+  role          UserRole  @default(tenant)
+  avatarUrl     String?   @map("avatar_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  managedProperties     Property[]           @relation("PropertyManager")
+  contracts             Contract[]           @relation("TenantContracts")
+  maintenanceRequests   MaintenanceRequest[] @relation("TenantRequests")
+  assignedMaintenance   MaintenanceRequest[] @relation("AssignedMaintenance")
+  assignedAppointments  Appointment[]        @relation("AssignedAppointments")
+  createdAppointments   Appointment[]        @relation("CreatedAppointments")
+  sentMessages          Message[]            @relation("SentMessages")
+  receivedMessages      Message[]            @relation("ReceivedMessages")
+  createdInvoices       Invoice[]            @relation("CreatedInvoices")
+  createdPayments       Payment[]            @relation("CreatedPayments")
+  assignedQuotes        QuoteRequest[]       @relation("AssignedQuotes")
+
+  @@map("users")
+}
+
+model Property {
+  id                String   @id @default(cuid())
+  name              String
+  address           String
+  city              String
+  postalCode        String   @map("postal_code")
+  description       String?
+  totalUnits        Int      @default(0) @map("total_units")
+  propertyManagerId String?  @map("property_manager_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  propertyManager User?         @relation("PropertyManager", fields: [propertyManagerId], references: [id], onDelete: SetNull)
+  units           Unit[]
+  appointments    Appointment[]
+
+  @@map("properties")
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  propertyId  String   @map("property_id")
+  unitNumber  String   @map("unit_number")
+  floor       Int?
+  sizeSqm     Decimal? @map("size_sqm") @db.Decimal(10, 2)
+  rooms       Decimal? @db.Decimal(3, 1)
+  monthlyRent Decimal  @map("monthly_rent") @db.Decimal(10, 2)
+  isOccupied  Boolean  @default(false) @map("is_occupied")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  property            Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contracts           Contract[]
+  appointments        Appointment[]
+  maintenanceRequests MaintenanceRequest[]
+
+  @@unique([propertyId, unitNumber])
+  @@map("units")
+}
+
+model Contract {
+  id          String         @id @default(cuid())
+  unitId      String         @map("unit_id")
+  tenantId    String         @map("tenant_id")
+  startDate   DateTime       @map("start_date") @db.Date
+  endDate     DateTime?      @map("end_date") @db.Date
+  monthlyRent Decimal        @map("monthly_rent") @db.Decimal(10, 2)
+  deposit     Decimal?       @db.Decimal(10, 2)
+  status      ContractStatus @default(active)
+  notes       String?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  tenant   User      @relation("TenantContracts", fields: [tenantId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@map("contracts")
+}
+
+model Invoice {
+  id                String        @id @default(cuid())
+  invoiceNumber     String        @unique @map("invoice_number")
+  contractId        String?       @map("contract_id")
+  tenantId          String        @map("tenant_id")
+  amount            Decimal       @db.Decimal(10, 2)
+  dueDate           DateTime      @map("due_date") @db.Date
+  paidDate          DateTime?     @map("paid_date") @db.Date
+  status            InvoiceStatus @default(draft)
+  description       String?
+  externalInvoiceId String?       @map("external_invoice_id")
+  createdById       String?       @map("created_by")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  contract  Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  createdBy User?     @relation("CreatedInvoices", fields: [createdById], references: [id], onDelete: SetNull)
+  payments  Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  invoiceId       String   @map("invoice_id")
+  amount          Decimal  @db.Decimal(10, 2)
+  paymentDate     DateTime @map("payment_date") @db.Date
+  paymentMethod   String?  @map("payment_method")
+  referenceNumber String?  @map("reference_number")
+  notes           String?
+  createdById     String?  @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy User?   @relation("CreatedPayments", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  title         String
+  description   String?
+  propertyId    String?           @map("property_id")
+  unitId        String?           @map("unit_id")
+  assignedToId  String?           @map("assigned_to")
+  scheduledDate DateTime          @map("scheduled_date")
+  completedDate DateTime?         @map("completed_date")
+  status        AppointmentStatus @default(scheduled)
+  priority      String            @default("medium")
+  notes         String?
+  createdById   String?           @map("created_by")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unit       Unit?     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  assignedTo User?     @relation("AssignedAppointments", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy  User?     @relation("CreatedAppointments", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@map("appointments")
+}
+
+model MaintenanceRequest {
+  id           String            @id @default(cuid())
+  tenantId     String            @map("tenant_id")
+  unitId       String?           @map("unit_id")
+  title        String
+  description  String
+  priority     String            @default("medium")
+  status       MaintenanceStatus @default(pending)
+  assignedToId String?           @map("assigned_to")
+  resolvedAt   DateTime?         @map("resolved_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  tenant     User  @relation("TenantRequests", fields: [tenantId], references: [id], onDelete: Cascade)
+  unit       Unit? @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("AssignedMaintenance", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@map("maintenance_requests")
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  senderId        String   @map("sender_id")
+  recipientId     String   @map("recipient_id")
+  subject         String
+  body            String
+  isRead          Boolean  @default(false) @map("is_read")
+  parentMessageId String?  @map("parent_message_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  sender        User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient     User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  parentMessage Message? @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies       Message[] @relation("MessageReplies")
+
+  @@map("messages")
+}
+
+model QuoteRequest {
+  id            String   @id @default(cuid())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  email         String
+  phone         String?
+  companyName   String?  @map("company_name")
+  propertyCount Int?     @map("property_count")
+  message       String?
+  status        String   @default("new")
+  assignedToId  String?  @map("assigned_to")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  assignedTo User? @relation("AssignedQuotes", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@map("quote_requests")
+}

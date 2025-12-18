@@ -1,96 +1,140 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { prisma } from "@/lib/db"
+import { getSession } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
-import type { Contract } from "@/lib/types/database"
+import type { ContractStatus } from "@prisma/client"
 
 export async function getContracts() {
-  const supabase = await createClient()
+  try {
+    const data = await prisma.contract.findMany({
+      orderBy: { startDate: "desc" },
+      include: {
+        tenant: {
+          select: { id: true, email: true, firstName: true, lastName: true, phone: true },
+        },
+        unit: {
+          include: {
+            property: true,
+          },
+        },
+      },
+    })
 
-  const { data, error } = await supabase
-    .from("contracts")
-    .select(
-      `
-      *,
-      tenant:profiles!contracts_tenant_id_fkey(*),
-      unit:units(*, property:properties(*))
-    `,
-    )
-    .order("start_date", { ascending: false })
-
-  if (error) {
-    return { error: error.message }
+    return { data }
+  } catch (error) {
+    console.error("[v0] getContracts exception:", error)
+    return { error: String(error) }
   }
-
-  return { data }
 }
 
 export async function getTenantContract() {
-  const supabase = await createClient()
+  try {
+    const session = await getSession()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    if (!session) {
+      return { error: "Not authenticated" }
+    }
 
-  if (!user) {
-    return { error: "Not authenticated" }
+    const data = await prisma.contract.findFirst({
+      where: {
+        tenantId: session.id,
+        status: "active",
+      },
+      include: {
+        unit: {
+          include: {
+            property: true,
+          },
+        },
+      },
+    })
+
+    return { data }
+  } catch (error) {
+    console.error("[v0] getTenantContract exception:", error)
+    return { error: String(error) }
   }
-
-  const { data, error } = await supabase
-    .from("contracts")
-    .select(
-      `
-      *,
-      unit:units(*, property:properties(*))
-    `,
-    )
-    .eq("tenant_id", user.id)
-    .eq("status", "active")
-    .single()
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  return { data }
 }
 
-export async function createContract(contract: Omit<Contract, "id" | "created_at" | "updated_at">) {
-  const supabase = await createClient()
+export async function createContract(contract: {
+  unitId: string
+  tenantId: string
+  startDate: Date
+  endDate?: Date | null
+  monthlyRent: number
+  deposit?: number | null
+  status?: ContractStatus
+  notes?: string | null
+}) {
+  try {
+    const data = await prisma.contract.create({
+      data: {
+        unitId: contract.unitId,
+        tenantId: contract.tenantId,
+        startDate: contract.startDate,
+        endDate: contract.endDate,
+        monthlyRent: contract.monthlyRent,
+        deposit: contract.deposit,
+        status: contract.status || "active",
+        notes: contract.notes,
+      },
+    })
 
-  const { data, error } = await supabase.from("contracts").insert(contract).select().single()
+    // Update unit occupancy
+    await prisma.unit.update({
+      where: { id: contract.unitId },
+      data: { isOccupied: true },
+    })
 
-  if (error) {
-    return { error: error.message }
+    revalidatePath("/admin/contracts")
+    revalidatePath("/admin/tenants")
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] createContract exception:", error)
+    return { error: String(error) }
   }
-
-  revalidatePath("/admin/contracts")
-  revalidatePath("/admin/tenants")
-  return { data, success: true }
 }
 
-export async function updateContractStatus(id: string, status: Contract["status"]) {
-  const supabase = await createClient()
+export async function updateContractStatus(id: string, status: ContractStatus) {
+  try {
+    const data = await prisma.contract.update({
+      where: { id },
+      data: { status },
+    })
 
-  const { data, error } = await supabase.from("contracts").update({ status }).eq("id", id).select().single()
+    // If contract is terminated, update unit occupancy
+    if (status === "terminated" || status === "expired") {
+      await prisma.unit.update({
+        where: { id: data.unitId },
+        data: { isOccupied: false },
+      })
+    }
 
-  if (error) {
-    return { error: error.message }
+    revalidatePath("/admin/contracts")
+    return { data, success: true }
+  } catch (error) {
+    console.error("[v0] updateContractStatus exception:", error)
+    return { error: String(error) }
   }
-
-  revalidatePath("/admin/contracts")
-  return { data, success: true }
 }
 
 export async function deleteContract(id: string) {
-  const supabase = await createClient()
+  try {
+    const contract = await prisma.contract.delete({
+      where: { id },
+    })
 
-  const { error } = await supabase.from("contracts").delete().eq("id", id)
+    // Update unit occupancy
+    await prisma.unit.update({
+      where: { id: contract.unitId },
+      data: { isOccupied: false },
+    })
 
-  if (error) {
-    return { error: error.message }
+    revalidatePath("/admin/contracts")
+    return { success: true }
+  } catch (error) {
+    console.error("[v0] deleteContract exception:", error)
+    return { error: String(error) }
   }
-
-  revalidatePath("/admin/contracts")
-  return { success: true }
 }
