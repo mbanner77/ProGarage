@@ -187,12 +187,4 @@ If automatic setup fails:
 
 ## 📝 License
 
-Built with [v0.app](https://v0.app)
-
-## 🔗 Links
-
-- **Live App:** [https://vercel.com/marcus-banners-projects/v0-build-app-from-concept](https://vercel.com/marcus-banners-projects/v0-build-app-from-concept)
-- **v0 Chat:** [https://v0.app/chat/hNW03nf7K7X](https://v0.app/chat/hNW03nf7K7X)
-```
-
-```tsx file="" isHidden
+RealCore Group
